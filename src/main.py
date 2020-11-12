@@ -10,8 +10,7 @@ authors = ['Vitruvius', 'Cicero', 'Iulius_Caesar', 'Suetonius', 'Titus_Livius',
 
 dataset_path = "../dataset"  # change here for directory location
 
-#download_dataset.download(authors, dataset_path)
+download_dataset.download(authors, dataset_path)
 
-#for file in os.listdir(dataset_path):
-
-
+for file in os.listdir(dataset_path):
+	preprocessing.removeTags(file)
