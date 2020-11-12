@@ -7,7 +7,7 @@ import re
 
 def removeTags(path_file):
 	text=open(path_file,"r").read()
-	text_r = re.sub('<META(.*)>(\n.*)*<\/teiHeader>|<head(.*)>(.*)<\/head>|<app(.*)>(.*)<\/app>|<foreign(.*)>(.*)<\/foreign>|<quote(.*)>(.*)<\/quote>|<argument().*>(.*\n)*<\/p>|<note(.*)>(.*)<\/note>|<rf(.*)>(.*)<\/rf>|<i(.*)>(.*)<\/i>|<[^<]+>', "", text)
+	text_r = re.sub('<META(.*)>(\n.*)*<\/teiHeader>|<head(.*)>(.*)<\/head>|<app(.*)>(.*)<\/app>|<foreign(.*)>(.*)<\/foreign>|<quote(.*)>(.*)<\/quote>|<argument(.*)>(.*\n)*<\/p>|<note(.*)>(.*)<\/note>|<rf(.*)>(.*)<\/rf>|<i(.*)>(.*)<\/i>|<[^<]+>', "", text)
 	with open(path_file, "w") as f:
 		f.write(text_r)
 
