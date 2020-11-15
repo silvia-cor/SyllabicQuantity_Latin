@@ -1,8 +1,6 @@
-import download_dataset
-import preprocessing
-import os
+import dataset_loader
 
-#list of authors that will be added in the dataset
+#list of authors that will be added in the dataset2
 authors = ['Vitruvius', 'Cicero', 'Iulius_Caesar', 'Suetonius', 'Titus_Livius',
            'Ammianus_Marcellinus', 'Apuleius', 'Augustinus_Hipponensis', 'Aulus_Gellius',
            'Columella', 'Petronius', 'Cornelius_Nepos', 'Curtius_Rufus', 'Quintilianus',
@@ -10,7 +8,8 @@ authors = ['Vitruvius', 'Cicero', 'Iulius_Caesar', 'Suetonius', 'Titus_Livius',
 
 dataset_path = "../dataset"  # change here for directory location
 
-download_dataset.download(authors, dataset_path)
+#just change values for download and cleaning
+dataset = dataset_loader.DatasetBuilder(authors, dataset_path,
+                                        download=False, cleaning=False, n_sentences=5)
 
-for file in os.listdir(dataset_path):
-	preprocessing.removeTags(file)
+X, y = dataset.data, dataset.authors_labels
