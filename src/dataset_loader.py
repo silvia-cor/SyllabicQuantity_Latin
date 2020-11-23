@@ -76,7 +76,7 @@ class DatasetBuilder:
         for i, file in enumerate(os.listdir(self.dir_path)):
             file_path = self.dir_path + '/' + file
             text = open(file_path, "r").read()
-            # get for author name
+            # get author name
             author = [authors.index(author) for author in authors if author in file]
             if len(author) > 1:
                 print('ALERT! More than one author name for %s' % file)
