@@ -4,13 +4,12 @@ from nltk import sent_tokenize
 import string
 import urllib.request, urllib.error, urllib.parse
 import os, sys
-import cltk
-from cltk.prosody.latin.macronizer import Macronizer
-#from cltk.prosody.latin.scanner import Scansion
-#from cltk.prosody.latin.clausulae_analysis import Clausulae
 
-# - divisione dei testi per frasi
-# - togliere punteggiatura
+#togliere gli a capo
+#fare lowercase
+#sostituire citazione con punto fermo
+#togliere i numeri 0-9
+#togliere ' . '
 
 # split text into sentences
 def _split_sentences(text):
@@ -24,8 +23,7 @@ def _split_sentences(text):
             if i < len(sentences) - 1:
                 sentences[i + 1] = sentences[i] + ' ' + sentences[i + 1]  # combined with the next sentence
             else:
-                sentences[i - 1] = sentences[i - 1] + ' ' + sentences[
-                    i]  # or the previous one if it was the last sentence
+                sentences[i - 1] = sentences[i - 1] + ' ' + sentences[i]  # or the previous one if it was the last sentence
             sentences.pop(i)  # and deleted as a standalone sentence
     return sentences
 
@@ -72,8 +70,6 @@ class DatasetBuilder:
             for file in os.listdir(self.dir_path):
                 file_path = self.dir_path + '/' + file
                 self._remove_tags(file_path)
-                self.macron(file_path)
-                #self.clausulae(file_path)
             print('----- CLEANING COMPLETE -----')
 
         # creates the fragments and the corresponding labels
@@ -88,7 +84,7 @@ class DatasetBuilder:
             self._splitter(text, author[0], i)
         print('Tot. fragments:', len(self.data))
 
-    # STEP 1: download the texts from Corpus Corposum
+    # STEP 1: download the texts from Corpus Corporum
     def _download_texts(self):
         print('----- DOWNLOADING TEXTS -----')
         # creating 'dataset2' directory
@@ -140,28 +136,13 @@ class DatasetBuilder:
     def _remove_tags(self, path_file):
         text = open(path_file, "r").read()
         text_r =  re.sub(
+            # r''
             '<META(.*)>(\n.*)*<\/teiHeader>|<head(.*)>(.*)<\/head>|<app(.*)>(.*)<\/app>|<foreign(.*)>(.*)<\/foreign>|<quote(.*)>(.*)<\/quote>|<argument(.*)>(.*\n)*<\/(.*)argument>|<note(.*)>(.*)<\/note>|<rf(.*)>(.*)<\/rf>|<i(.*)>(.*)<\/i>|<date(.*)>(.*)<\/date>|<[^<]+>',
             "", text)
         with open(path_file, "w") as f:
             f.write(text_r)
 
-    #STEP 3: macronize the texts        
-    def macron(self, path_file):
-    macronizer = Macronizer('tag_ngram_123_backoff')
-    text = open(path_file,"r").read()
-    text_r = macronizer.macronize_text(text)
-    with open(path_file,"w") as f:
-        f.write(text_r)
-
-    #def clausulae(self, path_file):
-    #s = Scansion()
-    #c = Clausulae()
-    #text = open(path_file, "r").read()
-    #prosody = s.scan_text(text)
-    #c.clausulae_analysis(prosody)
-    #print(c)
-
-    # STEP 4: divide the texts into sentences
+    # STEP 3: divide the texts into sentences
     def _splitter(self, text, author, title):
         sentences = _split_sentences(text)
         text_fragments = _group_sentences(sentences, self.n_sentences)
@@ -171,17 +152,3 @@ class DatasetBuilder:
         if author is not None:
             # add corresponding author labels, one for each fragment
             self.authors_labels.extend([author] * len(text_fragments))
-
-# def removePunct(path_file):
-# text = open(path_file, "r").read()
-# text_p = "".join([char for char in text if char not in string.punctuation])
-# with open(path_file,"w") as f:
-# f.write(text_p)
-
-
-# def divide_fragments(path_file):
-#     text = open(path_file, "r").read()
-#     text = text.replace("\n", " ")
-#     fragments = re.findall(r'<div2(.*?)*>(.*?)<\/div2>', text)
-#     if not fragments:
-#         print(path_file)
