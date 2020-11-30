@@ -135,12 +135,14 @@ class DatasetBuilder:
     # STEP 2: clean the texts (modify the document)
     def _remove_tags(self, path_file):
         text = open(path_file, "r").read()
-        text_r =  re.sub(
-            # r''
-            '<META(.*)>(\n.*)*<\/teiHeader>|<head(.*)>(.*)<\/head>|<app(.*)>(.*)<\/app>|<foreign(.*)>(.*)<\/foreign>|<quote(.*)>(.*)<\/quote>|<argument(.*)>(.*\n)*<\/(.*)argument>|<note(.*)>(.*)<\/note>|<rf(.*)>(.*)<\/rf>|<i(.*)>(.*)<\/i>|<date(.*)>(.*)<\/date>|<[^<]+>',
-            "", text)
+        text_r = re.sub('<META(.*)>(\n.*)*<\/teiHeader>|<head(.*)>(.*)<\/head>|<app(.*)>(.*)<\/app>|<foreign(.*)>(.*)<\/foreign>|<argument(.*)>(.*\n)*<\/(.*)argument>|<note(.*)>(.*)<\/note>|<rf(.*)>(.*)<\/rf>|<i(.*)>(.*)<\/i>|<date(.*)>(.*)<\/date>|<[^<]+>|[0-9]',"", text)
+        text_q = re.sub('quote(.*)>(.*)<\/quote>',".",text_r)
+        text_l = text_q.lower()
+        text_n = text_l.replace("\n","")
+        text_p = re.sub('\.\s+(?=\.)|\.\.+',"",text_n)
+        text_s = re.sub('\s\s+',"",text_p)
         with open(path_file, "w") as f:
-            f.write(text_r)
+            f.write(text_s)
 
     # STEP 3: divide the texts into sentences
     def _splitter(self, text, author, title):
