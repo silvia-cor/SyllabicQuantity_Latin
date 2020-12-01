@@ -140,7 +140,7 @@ class DatasetBuilder:
         text_l = text_q.lower()
         text_n = text_l.replace("\n","")
         text_p = re.sub('\.\s+(?=\.)|\.\.+',"",text_n)
-        text_s = re.sub('\s\s+',"",text_p)
+        text_s = re.sub('\s\s+'," ",text_p)
         with open(path_file, "w") as f:
             f.write(text_s)
 
