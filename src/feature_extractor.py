@@ -17,6 +17,9 @@ from scipy.sparse import hstack, csr_matrix
                     #'quantum', 'sed', 'enim', 'ut', 'etiam', 'sive', 'de', 'unde', 'inter', 'a', 'sicut', 'quidem', 
                     #'videlicet', 'cum', 'tam', 'magis', 'tunc', 'quod', 'ita', 'propter', 'ipse', 'tamen', 'quoque',
                     #'ergo', 'atque', 'si', 'sine', 'per', 'nisi', 'post', 'sic', 'adhuc', 'quia', 'ubi', 'licet', 'nec']
+          
+#kestemont_missing_function_words = ['quoniam', 'quam', 'semper', 'licet', 'uidelicet', 'quoque', 'uelut']
+#kestemont_missing_pronouns = ['qui', 'hic', 'ipse', 'quod', 'quantum']
 
 latin_function_words = ['et', 'in', 'de', 'ad', 'non', 'ut', 'cum', 'per', 'a', 'sed', 'que', 'quia', 'ex', 'sic',
                         'si', 'etiam', 'idest', 'nam', 'unde', 'ab', 'uel', 'sicut', 'ita', 'enim', 'scilicet', 'nec',
