@@ -102,8 +102,8 @@ def _metric_scansion(documents):
     return scanned_texts
 
 #vectorize the documents with tfidf and select the best features
-def _tfidf_chi2(doc_train, doc_test, y_train, type, min, max, feature_selection_ratio):
-    vectorizer = TfidfVectorizer(analyzer=type, ngram_range=(min, max))
+def _vector_select(doc_train, doc_test, y_train, type, min, max, feature_selection_ratio):
+    vectorizer = CountVectorizer(analyzer=type, ngram_range=(min, max))
     f_train = vectorizer.fit_transform(doc_train)
     f_test = vectorizer.transform(doc_test)
     if feature_selection_ratio != 1:
@@ -155,8 +155,6 @@ class FeatureExtractor:
         #
         # if feature_selection_ratio: has a value: for char_ngrams and syll_ngrams, (value) features are selected with chi2
 
-        print('----- CREATING FEATURE MATRIXES -----')
-
         if function_words_freq is not None:
             f = _function_words_freq(self.doc_train, function_words_freq)
             self.X_train = hstack((self.X_train, f))
@@ -179,7 +177,7 @@ class FeatureExtractor:
             print(f'task sentences lengths (#features={f.shape[1]}) [Done]')
 
         if char_ngrams:
-            f_train, f_test = _tfidf_chi2(self.doc_train, self.doc_test, self.y_train, 'char',
+            f_train, f_test = _vector_select(self.doc_train, self.doc_test, self.y_train, 'char',
                                           char_ngrams_range[0], char_ngrams_range[1], feature_selection_ratio)
             self.X_train = hstack((self.X_train, csr_matrix(f_train)))
             self.X_test = hstack((self.X_test, csr_matrix(f_test)))
@@ -188,7 +186,7 @@ class FeatureExtractor:
         if syll_ngrams:
             scanned_train = _metric_scansion(doc_train)
             scanned_test = _metric_scansion(doc_test)
-            f_train, f_test = _tfidf_chi2(scanned_train, scanned_test, self.y_train, 'char',
+            f_train, f_test = _vector_select(scanned_train, scanned_test, self.y_train, 'char',
                                           syll_ngrams_range[0], syll_ngrams_range[1], feature_selection_ratio)
             self.X_train = hstack((self.X_train, csr_matrix(f_train)))
             self.X_test = hstack((self.X_test, csr_matrix(f_test)))
