@@ -20,7 +20,7 @@ dataset_path = "../dataset"  # change here for directory location
 
 #just change values for download and cleaning
 dataset = dataset_loader.DatasetBuilder(authors, dataset_path,
-                                        download=False, cleaning=False, n_sentences=7)
+                                        download=False, cleaning=False, n_sentences=10)
 
 k_fold = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 i=0
@@ -41,10 +41,10 @@ for train_index, test_index in k_fold.split(dataset.data, dataset.authors_labels
     X_train, X_test = features.X_train, features.X_test
 
     print('CLASSIFICATION')
-    #param_grid= {'C': [0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000]}
-    param_grid= {'C': [1]}
-    #cls = SVC(kernel='linear', random_state=42)
-    cls = GridSearchCV(LogisticRegression(max_iter=100), param_grid)
+    param_grid= {'C': [0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000]}
+    #param_grid= {'C': [1, 10]}
+    #cls = GridSearchCV(LogisticRegression(max_iter=100), param_grid)
+    cls = GridSearchCV(SVC(kernel='linear', random_state=42), param_grid, n_jobs=4)
     cls.fit(X_train, y_train)
     print('Best C:', cls.best_params_['C'])
     y_pred = cls.predict(X_test)

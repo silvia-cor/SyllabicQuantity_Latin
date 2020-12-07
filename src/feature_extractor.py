@@ -22,12 +22,12 @@ from scipy.sparse import hstack, csr_matrix
 #kestemont_missing_pronouns = ['qui', 'hic', 'ipse', 'quod', 'quantum']
 
 latin_function_words = ['et', 'in', 'de', 'ad', 'non', 'ut', 'cum', 'per', 'a', 'sed', 'que', 'quia', 'ex', 'sic',
-                        'si', 'etiam', 'idest', 'nam', 'unde', 'ab', 'uel', 'sicut', 'ita', 'enim', 'scilicet', 'nec',
-                        'pro', 'autem', 'ibi', 'dum', 'uero', 'tamen', 'inter', 'ideo', 'propter', 'contra', 'sub',
+                        'si', 'etiam', 'idest', 'nam', 'unde', 'ab', 'vel', 'sicut', 'ita', 'enim', 'scilicet', 'nec',
+                        'pro', 'autem', 'ibi', 'dum', 'vero', 'tamen', 'inter', 'ideo', 'propter', 'contra', 'sub',
                         'quomodo', 'ubi', 'super', 'iam', 'tam', 'hec', 'post', 'quasi', 'ergo', 'inde', 'e', 'tunc',
-                        'atque', 'ac', 'sine', 'nisi', 'nunc', 'quando', 'ne', 'usque', 'siue', 'aut', 'igitur',
-                        'circa', 'quidem', 'supra', 'ante', 'adhuc', 'seu', 'apud', 'olim', 'statim', 'satis', 'ob', 'quoniam',
-                        'postea', 'nunquam']
+                        'atque', 'ac', 'sine', 'nisi', 'nunc', 'quando', 'ne', 'usque', 'sive', 'aut', 'igitur',
+                        'circa', 'quidem', 'supra', 'ante', 'adhuc', 'seu', 'apud', 'olim', 'statim', 'satis', 'ob',
+                        'quoniam', 'postea', 'nunquam', 'semper', 'licet', 'videlicet', 'quoque', 'velut']
 
 
 # return list of function words
