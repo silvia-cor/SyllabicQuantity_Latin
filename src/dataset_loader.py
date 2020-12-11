@@ -4,6 +4,7 @@ from nltk import sent_tokenize
 import string
 import urllib.request, urllib.error, urllib.parse
 import os, sys
+import numpy as np
 
 #togliere gli a capo
 #fare lowercase
@@ -28,7 +29,7 @@ def _split_sentences(text):
     return sentences
 
 
-# group sentences into fragments
+# group sentences into fragments of window_size sentences
 def _group_sentences(sentences, window_size):
     new_fragments = []
     nbatches = len(sentences) // window_size
@@ -59,13 +60,14 @@ class DatasetBuilder:
         self.dir_path = dir_path
         self.n_sentences = n_sentences
         self.data = []  # text samples
+        self.titles_list = [] # titles of the works
         self.authors_labels = []  # labels with authors indexes
         self.titles_labels = []  # labels with titles indexes
 
-        if download:  # if download = True, download the texts
+        if download:  # if download == True, download the texts
             self._download_texts()
 
-        if cleaning:  # if cleaning = True, clean the texts
+        if cleaning:  # if cleaning == True, clean the texts
             print('----- CLEANING TEXTS -----')
             for file in os.listdir(self.dir_path):
                 file_path = self.dir_path + '/' + file
@@ -79,15 +81,23 @@ class DatasetBuilder:
             text = open(file_path, "r").read()
             # get author name
             author = [authors.index(author) for author in authors if author in file]
+            self.titles_list.append(file)
             if len(author) > 1:
                 print('ALERT! More than one author name for %s' % file)
             self._splitter(text, author[0], i)
         print('Tot. fragments:', len(self.data))
 
+        #convert into numpy arrays
+        self.data = np.array(self.data)
+        self.authors = np.array(self.authors)
+        self.titles_list = np.array(self.titles_list)
+        self.authors_labels = np.array(self.authors_labels)
+        self.titles_labels = np.array(self.titles_labels)
+
+
     # STEP 1: download the texts from Corpus Corporum
     def _download_texts(self):
         print('----- DOWNLOADING TEXTS -----')
-        # creating 'dataset2' directory
         try:
             os.mkdir(self.dir_path)
         except OSError:
@@ -102,7 +112,7 @@ class DatasetBuilder:
             author_webpage = urllib.request.urlopen(author_link).read().decode('utf-8')
             # get list of titles for the single author...
             author_titles = re.findall(r'target=\"verz\">([A-Z]+.*?)</a>', author_webpage)
-            # ... and add it to the list of lists
+            # ... and add it to the list of lists authors_titles
             authors_titles.append(author_titles)
         # keep the number of downloads failed or suceeded
         n_fails = 0
@@ -135,19 +145,41 @@ class DatasetBuilder:
     # STEP 2: clean the texts (modify the document)
     def _remove_tags(self, path_file):
         text = open(path_file, "r").read()
-        text_r = re.sub('<META(.*)>(\n.*)*<\/teiHeader>|<head(.*)>(.*)<\/head>|<app(.*)>(.*)<\/app>|<foreign(.*)>(.*)<\/foreign>|<argument(.*)>(.*\n)*<\/(.*)argument>|<note(.*)>(.*)<\/note>|<rf(.*)>(.*)<\/rf>|<i(.*)>(.*)<\/i>|<date(.*)>(.*)<\/date>|<[^<]+>|[0-9]',"", text)
-        text_q = re.sub('quote(.*)>(.*)<\/quote>',".",text_r)
-        text_l = text_q.lower()
-        text_n = text_l.replace("\n","")
-        text_p = re.sub('\.\s+(?=\.)|\.\.+',"",text_n)
-        text_s = re.sub('\s\s+'," ",text_p)
+        text = re.sub('<META(.*)>(\n.*)*<\/teiHeader>|<head(.*)>(.*)<\/head>|<app(.*)>(.*)<\/app>|<foreign(.*)>(.*)<\/foreign>|<argument(.*)>(.*\n)*<\/(.*)argument>|<note(.*)>(.*)<\/note>|<rf(.*)>(.*)<\/rf>|<i(.*)>(.*)<\/i>|<date(.*)>(.*)<\/date>|<[^<]+>|[0-9]',"", text)
+        text = re.sub('quote(.*)>(.*)<\/quote>',"",text)
+        text = text.lower()
+        text = text.replace('v', 'u')
+        text = re.sub('\.\s+(?=\.)|\.\.+',"",text)
+        text = re.sub("(\s)+", " ", text)
+        text = text.replace("\n", "")
+        text = re.sub("\(|\)|\[|\]", "", text)
+        text = re.sub("\—|\–|\-|\_", "", text)
+        text = re.sub("\‹|\›|\=|\/|\\|\~|\§|\&quot|\&|\*|\^|\“|\”", "", text)
+        text = re.sub("\?|\!|\:|\;", ".", text)
+        text = text.replace("'", "")
+        text = text.replace('"', '')
+        text = text.replace(".,", ".")
+        text = text.replace(",.", ".")
+        text = text.replace(" .", ".")
+        text = text.replace(" ,", ",")
+        text = re.sub('(\.)+', ".", text)
+        text = re.sub('(\,)+', ",", text)
+        text = text.replace("á", "a")
+        text = text.replace("é", "e")
+        text = text.replace("í", "i")
+        text = text.replace("ó", "o")
+
+
+
         with open(path_file, "w") as f:
-            f.write(text_s)
+            f.write(text)
 
     # STEP 3: divide the texts into sentences
     def _splitter(self, text, author, title):
+        text_fragments = []
+        #text_fragments.append(text) #add whole text
         sentences = _split_sentences(text)
-        text_fragments = _group_sentences(sentences, self.n_sentences)
+        text_fragments.extend(_group_sentences(sentences, self.n_sentences))
         self.data.extend(text_fragments)
         # add corresponding title label, one for each fragment
         self.titles_labels.extend([title] * len(text_fragments))

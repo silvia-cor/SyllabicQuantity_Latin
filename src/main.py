@@ -1,14 +1,4 @@
-import dataset_loader, feature_extractor
-from sklearn.model_selection import StratifiedKFold
-from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import f1_score
-
-#sometimes the learning method does not converge; this is to suppress a lot of warnings
-from warnings import simplefilter
-from sklearn.exceptions import ConvergenceWarning
-simplefilter("ignore", category=ConvergenceWarning)
+import dataset_loader, classification
 
 #list of authors that will be added in the dataset
 authors = ['Vitruvius', 'Cicero', 'Iulius_Caesar', 'Suetonius', 'Titus_Livius',
@@ -22,43 +12,20 @@ dataset_path = "../dataset"  # change here for directory location
 dataset = dataset_loader.DatasetBuilder(authors, dataset_path,
                                         download=False, cleaning=False, n_sentences=10)
 
-k_fold = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-i=0
-y_preds = [] #series of predictions
-y_tests = [] #series of true labels
+features_params = {'feature_selection_ratio': 1,
+            'function_words_freq': 'latin',
+            'words_lengths_freq': True,
+            'sentence_lengths_freq': True,
+            'word_ngrams': False,
+            'word_ngrams_range': [2, 2],
+            'char_ngrams': False,
+            'char_ngrams_range': [3, 3],
+            'syll_ngrams': True,
+            'syll_ngrams_range': [3, 4]}
 
-#k-fold cross validation
-for train_index, test_index in k_fold.split(dataset.data, dataset.authors_labels):
-    i += 1
-    x_train = [dataset.data[index] for index in train_index]
-    x_test = [dataset.data[index] for index in test_index]
-    y_train = [dataset.authors_labels[index] for index in train_index]
-    y_test = [dataset.authors_labels[index] for index in test_index]
-
-    print(f'----- K-FOLD EXPERIMENT {i} -----')
-    print('FEATURE EXTRACTION')
-    features = feature_extractor.FeatureExtractor(x_train, x_test, y_train, y_test, syll_ngrams=False)
-    X_train, X_test = features.X_train, features.X_test
-
-    print('CLASSIFICATION')
-    param_grid= {'C': [0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000]}
-    #param_grid= {'C': [1, 10]}
-    #cls = GridSearchCV(LogisticRegression(max_iter=100), param_grid)
-    cls = GridSearchCV(SVC(kernel='linear', random_state=42), param_grid, n_jobs=4)
-    cls.fit(X_train, y_train)
-    print('Best C:', cls.best_params_['C'])
-    y_pred = cls.predict(X_test)
-    f1 = f1_score(y_test,y_pred, average='weighted')
-    print(f'F1: {f1:.3f}')
-    y_preds.extend(y_pred)
-    y_tests.extend(y_test)
+classification.kfold_crossval(dataset, features_params, n_splits=5)
 
 
-print('----- FINAL SCORE -----')
-macro_f1 = f1_score(y_tests, y_preds, average='macro')
-micro_f1 = f1_score(y_tests, y_preds, average='micro')
-print(f'Macro-F1: {macro_f1:.3f}')
-print(f'Micro-F1: {micro_f1:.3f}')
 
 
 

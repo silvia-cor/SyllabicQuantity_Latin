@@ -1,3 +1,4 @@
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 from cltk.prosody.latin.macronizer import Macronizer
@@ -11,23 +12,23 @@ from scipy.sparse import hstack, csr_matrix
 # support functions
 # ------------------------------------------------------------------------
 
-#kestemont_2015 = ['et', 'e', 'quoniam', 'contra', 'qui', 'vel', 'in', 'aut', 'quasi', dum', 
-                    #'pro', 'idem', 'scilicet', 'non', 'quam', 'super',
-                    #'velut', 'autem', 'ante', 'nunc', 'iam', 'ad', 'ne', 'semper', 'apud', 'usque', 'hic', 'ac',
-                    #'quantum', 'sed', 'enim', 'ut', 'etiam', 'sive', 'de', 'unde', 'inter', 'a', 'sicut', 'quidem', 
-                    #'videlicet', 'cum', 'tam', 'magis', 'tunc', 'quod', 'ita', 'propter', 'ipse', 'tamen', 'quoque',
-                    #'ergo', 'atque', 'si', 'sine', 'per', 'nisi', 'post', 'sic', 'adhuc', 'quia', 'ubi', 'licet', 'nec']
-          
-#kestemont_missing_function_words = ['quoniam', 'quam', 'semper', 'licet', 'uidelicet', 'quoque', 'uelut']
-#kestemont_missing_pronouns = ['qui', 'hic', 'ipse', 'quod', 'quantum']
+# kestemont_2015 = ['et', 'e', 'quoniam', 'contra', 'qui', 'vel', 'in', 'aut', 'quasi', dum',
+# 'pro', 'idem', 'scilicet', 'non', 'quam', 'super',
+# 'velut', 'autem', 'ante', 'nunc', 'iam', 'ad', 'ne', 'semper', 'apud', 'usque', 'hic', 'ac',
+# 'quantum', 'sed', 'enim', 'ut', 'etiam', 'sive', 'de', 'unde', 'inter', 'a', 'sicut', 'quidem',
+# 'videlicet', 'cum', 'tam', 'magis', 'tunc', 'quod', 'ita', 'propter', 'ipse', 'tamen', 'quoque',
+# 'ergo', 'atque', 'si', 'sine', 'per', 'nisi', 'post', 'sic', 'adhuc', 'quia', 'ubi', 'licet', 'nec']
+
+# kestemont_missing_function_words = ['quoniam', 'quam', 'semper', 'licet', 'uidelicet', 'quoque', 'uelut']
+# kestemont_missing_pronouns = ['qui', 'hic', 'ipse', 'quod', 'quantum']
 
 latin_function_words = ['et', 'in', 'de', 'ad', 'non', 'ut', 'cum', 'per', 'a', 'sed', 'que', 'quia', 'ex', 'sic',
-                        'si', 'etiam', 'idest', 'nam', 'unde', 'ab', 'vel', 'sicut', 'ita', 'enim', 'scilicet', 'nec',
-                        'pro', 'autem', 'ibi', 'dum', 'vero', 'tamen', 'inter', 'ideo', 'propter', 'contra', 'sub',
+                        'si', 'etiam', 'idest', 'nam', 'unde', 'ab', 'uel', 'sicut', 'ita', 'enim', 'scilicet', 'nec',
+                        'pro', 'autem', 'ibi', 'dum', 'uero', 'tamen', 'inter', 'ideo', 'propter', 'contra', 'sub',
                         'quomodo', 'ubi', 'super', 'iam', 'tam', 'hec', 'post', 'quasi', 'ergo', 'inde', 'e', 'tunc',
-                        'atque', 'ac', 'sine', 'nisi', 'nunc', 'quando', 'ne', 'usque', 'sive', 'aut', 'igitur',
+                        'atque', 'ac', 'sine', 'nisi', 'nunc', 'quando', 'ne', 'usque', 'siue', 'aut', 'igitur',
                         'circa', 'quidem', 'supra', 'ante', 'adhuc', 'seu', 'apud', 'olim', 'statim', 'satis', 'ob',
-                        'quoniam', 'postea', 'nunquam', 'semper', 'licet', 'videlicet', 'quoque', 'velut']
+                        'quoniam', 'postea', 'nunquam', 'semper', 'licet', 'uidelicet', 'quoque', 'uelut']
 
 
 # return list of function words
@@ -102,30 +103,31 @@ def _sentences_lengths_freq(documents, min=3, max=70):
 
 # transform text into metric scansion
 def _metric_scansion(documents):
-    # macronizing the texts
+    # macronizing and scanning the texts
     macronizer = Macronizer('tag_ngram_123_backoff')
-    macronized_texts = [macronizer.macronize_text(doc) for doc in documents]
-    # scanning the macronized texts
-    scanner = Scansion()  # scansion has been modified from original cltk library
-    scanned_texts = [scanner.scan_text(macronized_text) for macronized_text in macronized_texts]
-    scanned_texts = [''.join(scanned_text) for scanned_text in scanned_texts] #concatenate the sentences
+    scanner = Scansion(clausula_length=10000) # clausula_length was 13, it didn't get the string before that point (it goes backward)
+    scanned_texts = [scanner.scan_text(macronizer.macronize_text(doc)) for doc in documents]
+    scanned_texts = [''.join(scanned_text) for scanned_text in scanned_texts]  # concatenate the sentences
     return scanned_texts
 
-#vectorize the documents with tfidf and select the best features
+
+# vectorize the documents with tfidf and select the best features
 def _vector_select(doc_train, doc_test, y_train, type, min, max, feature_selection_ratio):
     vectorizer = CountVectorizer(analyzer=type, ngram_range=(min, max))
     f_train = vectorizer.fit_transform(doc_train)
     f_test = vectorizer.transform(doc_test)
     if feature_selection_ratio != 1:
-        num_feats = int(f_train.shape[1] * feature_selection_ratio) #number of selected features (must be int)
+        num_feats = int(f_train.shape[1] * feature_selection_ratio)  # number of selected features (must be int)
         selector = SelectKBest(chi2, k=num_feats)
         f_train = selector.fit_transform(f_train, y_train)
         f_test = selector.transform(f_test)
     return f_train, f_test
 
+
 # ------------------------------------------------------------------------
 # class for the extraction of features
 # ------------------------------------------------------------------------
+# class FeatureExtractor:
 class FeatureExtractor:
     def __init__(self, doc_train, doc_test, y_train, y_test, feature_selection_ratio=1,
                  function_words_freq='latin',
@@ -159,8 +161,8 @@ class FeatureExtractor:
 
         # final matrixes of features
         # initialize the right number of rows, or hstack won't work
-        self.X_train = csr_matrix((len(doc_train),0))
-        self.X_test = csr_matrix((len(doc_test),0))
+        self.X_train = csr_matrix((len(doc_train), 0))
+        self.X_test = csr_matrix((len(doc_test), 0))
 
         #
         # if feature_selection_ratio: has a value: for char_ngrams and syll_ngrams, (value) features are selected with chi2
@@ -188,7 +190,7 @@ class FeatureExtractor:
 
         if char_ngrams:
             f_train, f_test = _vector_select(self.doc_train, self.doc_test, self.y_train, 'char',
-                                          char_ngrams_range[0], char_ngrams_range[1], feature_selection_ratio)
+                                             char_ngrams_range[0], char_ngrams_range[1], feature_selection_ratio)
             self.X_train = hstack((self.X_train, csr_matrix(f_train)))
             self.X_test = hstack((self.X_test, csr_matrix(f_test)))
             print(f'task character n-grams (#features={f_train.shape[1]}) [Done]')
@@ -197,7 +199,7 @@ class FeatureExtractor:
             scanned_train = _metric_scansion(doc_train)
             scanned_test = _metric_scansion(doc_test)
             f_train, f_test = _vector_select(scanned_train, scanned_test, self.y_train, 'char',
-                                          syll_ngrams_range[0], syll_ngrams_range[1], feature_selection_ratio)
+                                             syll_ngrams_range[0], syll_ngrams_range[1], feature_selection_ratio)
             self.X_train = hstack((self.X_train, csr_matrix(f_train)))
             self.X_test = hstack((self.X_test, csr_matrix(f_test)))
             print(f'task syllables n-grams (#features={f_train.shape[1]}) [Done]')
