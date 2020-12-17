@@ -1,4 +1,3 @@
-from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 from cltk.prosody.latin.macronizer import Macronizer
@@ -7,6 +6,9 @@ import nltk
 from nltk.corpus import stopwords
 import numpy as np
 from scipy.sparse import hstack, csr_matrix
+import itertools
+import multiprocessing
+from joblib import Parallel, delayed
 
 # ------------------------------------------------------------------------
 # support functions
@@ -46,6 +48,20 @@ def _tokenize(text):
     unmod_tokens = nltk.word_tokenize(text)
     return [token.lower() for token in unmod_tokens if any(char.isalpha() for char in token)]
 
+# def _get_parallel_slices(n_tasks, n_jobs=-1):
+#     if n_jobs == -1:
+#         n_jobs = multiprocessing.cpu_count()
+#     batch = int(n_tasks / n_jobs)
+#     remainder = n_tasks % n_jobs
+#     return [slice(job * batch, (job + 1) * batch + (remainder if job == n_jobs - 1 else 0)) for job in
+#             range(n_jobs)]
+#
+# def _parallelize(func, args, n_jobs):
+#     args = np.asarray(args)
+#     slices = _get_parallel_slices(len(args), n_jobs)
+#     results = Parallel(n_jobs=n_jobs)(delayed(func)(args[slice_i]) for slice_i in slices)
+#     return list(itertools.chain.from_iterable(results))
+
 
 # ------------------------------------------------------------------------
 # feature extraction methods
@@ -59,8 +75,6 @@ def _function_words_freq(documents, lang):
         mod_tokens = _tokenize(text)
         freqs = nltk.FreqDist(mod_tokens)
         nwords = len(mod_tokens)
-        if nwords == 0:
-            print(text)
         funct_words_freq = [1000. * freqs[function_word] / nwords for function_word in function_words]
         features.append(funct_words_freq)
     f = csr_matrix(features)
@@ -101,15 +115,16 @@ def _sentences_lengths_freq(documents, min=3, max=70):
     return f
 
 
+
 # transform text into metric scansion
+# macronizing and scanning the texts
+#to do: parallelize
 def _metric_scansion(documents):
-    # macronizing and scanning the texts
     macronizer = Macronizer('tag_ngram_123_backoff')
     scanner = Scansion(clausula_length=10000) # clausula_length was 13, it didn't get the string before that point (it goes backward)
     scanned_texts = [scanner.scan_text(macronizer.macronize_text(doc)) for doc in documents]
     scanned_texts = [''.join(scanned_text) for scanned_text in scanned_texts]  # concatenate the sentences
     return scanned_texts
-
 
 # vectorize the documents with tfidf and select the best features
 def _vector_select(doc_train, doc_test, y_train, type, min, max, feature_selection_ratio):
@@ -164,8 +179,6 @@ class FeatureExtractor:
         self.X_train = csr_matrix((len(doc_train), 0))
         self.X_test = csr_matrix((len(doc_test), 0))
 
-        #
-        # if feature_selection_ratio: has a value: for char_ngrams and syll_ngrams, (value) features are selected with chi2
 
         if function_words_freq is not None:
             f = _function_words_freq(self.doc_train, function_words_freq)

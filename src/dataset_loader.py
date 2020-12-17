@@ -6,12 +6,6 @@ import urllib.request, urllib.error, urllib.parse
 import os, sys
 import numpy as np
 
-#togliere gli a capo
-#fare lowercase
-#sostituire citazione con punto fermo
-#togliere i numeri 0-9
-#togliere ' . '
-
 # split text into sentences
 def _split_sentences(text):
     # strip() removes blank spaces before and after string
@@ -75,24 +69,16 @@ class DatasetBuilder:
             print('----- CLEANING COMPLETE -----')
 
         # creates the fragments and the corresponding labels
-        print('----- CREATING FRAGMENTS -----')
+        print('----- CREATING DATASET -----')
         for i, file in enumerate(os.listdir(self.dir_path)):
             file_path = self.dir_path + '/' + file
             text = open(file_path, "r").read()
             # get author name
             author = [authors.index(author) for author in authors if author in file]
-            self.titles_list.append(file)
+            self.titles_list.append(file) #append title
             if len(author) > 1:
                 print('ALERT! More than one author name for %s' % file)
             self._splitter(text, author[0], i)
-        print('Tot. fragments:', len(self.data))
-
-        #convert into numpy arrays
-        self.data = np.array(self.data)
-        self.authors = np.array(self.authors)
-        self.titles_list = np.array(self.titles_list)
-        self.authors_labels = np.array(self.authors_labels)
-        self.titles_labels = np.array(self.titles_labels)
 
 
     # STEP 1: download the texts from Corpus Corporum
@@ -142,7 +128,7 @@ class DatasetBuilder:
         print('Texts downloaded:', n_oks)
         print('Failed attempts:', n_fails)
 
-    # STEP 2: clean the texts (modify the document)
+    # STEP 2: clean the text (modify the document)
     def _remove_tags(self, path_file):
         text = open(path_file, "r").read()
         text = re.sub('<META(.*)>(\n.*)*<\/teiHeader>|<head(.*)>(.*)<\/head>|<app(.*)>(.*)<\/app>|<foreign(.*)>(.*)<\/foreign>|<argument(.*)>(.*\n)*<\/(.*)argument>|<note(.*)>(.*)<\/note>|<rf(.*)>(.*)<\/rf>|<i(.*)>(.*)<\/i>|<date(.*)>(.*)<\/date>|<[^<]+>|[0-9]',"", text)
@@ -168,21 +154,18 @@ class DatasetBuilder:
         text = text.replace("é", "e")
         text = text.replace("í", "i")
         text = text.replace("ó", "o")
-
-
-
         with open(path_file, "w") as f:
             f.write(text)
 
-    # STEP 3: divide the texts into sentences
+    # STEP 3: divide the text into sentences
     def _splitter(self, text, author, title):
         text_fragments = []
-        #text_fragments.append(text) #add whole text
+        text_fragments.append(text) #add whole text
         sentences = _split_sentences(text)
         text_fragments.extend(_group_sentences(sentences, self.n_sentences))
-        self.data.extend(text_fragments)
+        self.data.append(text_fragments)
         # add corresponding title label, one for each fragment
-        self.titles_labels.extend([title] * len(text_fragments))
+        self.titles_labels.append([title] * len(text_fragments))
         if author is not None:
             # add corresponding author labels, one for each fragment
-            self.authors_labels.extend([author] * len(text_fragments))
+            self.authors_labels.append([author] * len(text_fragments))
