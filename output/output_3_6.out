@@ -1,0 +1,82 @@
+----- CREATING DATASET -----
+Tot. fragments: 15837
+----- K-FOLD EXPERIMENT 1 -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+task syllables n-grams (#features=1080) [Done]
+Training shape:  (12669, 1248)
+Test shape:  (3168, 1248)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 100
+F1: 0.752
+----- K-FOLD EXPERIMENT 2 -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+task syllables n-grams (#features=1080) [Done]
+Training shape:  (12669, 1248)
+Test shape:  (3168, 1248)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1000
+F1: 0.750
+----- K-FOLD EXPERIMENT 3 -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+task syllables n-grams (#features=1080) [Done]
+Training shape:  (12670, 1248)
+Test shape:  (3167, 1248)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.1
+F1: 0.734
+----- K-FOLD EXPERIMENT 4 -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+task syllables n-grams (#features=1080) [Done]
+Training shape:  (12670, 1248)
+Test shape:  (3167, 1248)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.001
+F1: 0.740
+----- K-FOLD EXPERIMENT 5 -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+task syllables n-grams (#features=1080) [Done]
+Training shape:  (12670, 1248)
+Test shape:  (3167, 1248)
+CLASSIFICATION
+Best C: 10
+F1: 0.727
+----- FINAL SCORE -----
+Macro-F1: 0.609
+Micro-F1: 0.753
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'

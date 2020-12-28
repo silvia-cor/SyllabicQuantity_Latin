@@ -1,0 +1,807 @@
+----- CREATING DATASET -----
+Tot. fragments + whole texts: 15905
+----- LOO FOR Vitruvius_De Architectura.txt (1/68) -----
+This is the only text by the author. Skipping.
+----- LOO FOR Cicero_Academica.txt (2/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15790, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.1
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Brutus.txt (3/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15734, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.001
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Cato Maior: de Senectute.txt (4/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15859, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 100
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_De Divinatione.txt (5/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15739, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.01
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_De Fato.txt (6/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15874, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.1
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_De Finibus.txt (7/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15628, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.1
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_De Natura Deorum.txt (8/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15721, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1000
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_De Officiis.txt (9/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15731, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_De Optimo Genere Oratorum.txt (10/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15893, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_De Oratore.txt (11/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15610, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1000
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_De Republica.txt (12/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15800, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 10
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Epistolae ad Atticum.txt (13/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15064, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Best C: 1
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Epistolae ad Brutum.txt (14/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15848, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.01
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Epistolae ad Familiares.txt (15/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15281, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.001
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Epistolae ad Quintum.txt (16/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15805, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.1
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Laelius de Amicitia.txt (17/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15854, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 100
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Lucullus.txt (18/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15812, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 100
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Orationes 1.txt (19/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15546, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1000
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Orationes 2.txt (20/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15484, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.01
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Orationes 3.txt (21/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15353, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.01
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Orationes 4.txt (22/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15538, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 100
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Orationes 5.txt (23/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15625, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Orationes 6.txt (24/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15738, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 100
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Orator.txt (25/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15791, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.001
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Paradoxa stoicorum ad M. Brutum.txt (26/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15877, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1000
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Partitiones Oratoriae.txt (27/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15847, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1000
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Petitio consulatus.txt (28/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15884, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Topica.txt (29/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15859, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1
+Author predicted: ['Cicero']
+----- LOO FOR Cicero_Tusculanae disputationes.txt (30/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15568, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 10
+Author predicted: ['Cicero']
+----- LOO FOR Iulius_Caesar_De Bello Civili.txt (31/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15740, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 100
+Author predicted: ['Iulius_Caesar']
+----- LOO FOR Iulius_Caesar_De bello Gallico.txt (32/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15655, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1000
+Author predicted: ['Titus_Livius']
+----- LOO FOR Suetonius_De Vita Caesarum.txt (33/68) -----
+This is the only text by the author. Skipping.
+----- LOO FOR Titus_Livius_Ab Urbe Condita libri 01-2.txt (34/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15701, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1
+Author predicted: ['Titus_Livius']
+----- LOO FOR Titus_Livius_Ab Urbe Condita libri 03-4.txt (35/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15708, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1
+Author predicted: ['Titus_Livius']
+----- LOO FOR Titus_Livius_Ab Urbe Condita libri 05-7.txt (36/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15684, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 100
+Author predicted: ['Titus_Livius']
+----- LOO FOR Titus_Livius_Ab Urbe Condita libri 08-10.txt (37/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15654, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1000
+Author predicted: ['Titus_Livius']
+----- LOO FOR Titus_Livius_Ab Urbe Condita libri 21-22.txt (38/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15780, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1000
+Author predicted: ['Titus_Livius']
+----- LOO FOR Titus_Livius_Ab Urbe Condita libri 23-25.txt (39/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15677, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.1
+Author predicted: ['Titus_Livius']
+----- LOO FOR Titus_Livius_Ab Urbe Condita libri 26-27.txt (40/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15737, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.1
+Author predicted: ['Titus_Livius']
+----- LOO FOR Titus_Livius_Ab Urbe Condita libri 28-30.txt (41/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15698, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 100
+Author predicted: ['Titus_Livius']
+----- LOO FOR Titus_Livius_Ab Urbe Condita libri 31-34.txt (42/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15639, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.1
+Author predicted: ['Titus_Livius']
+----- LOO FOR Titus_Livius_Ab Urbe Condita libri 35-37.txt (43/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15710, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.01
+Author predicted: ['Titus_Livius']
+----- LOO FOR Titus_Livius_Ab Urbe Condita libri 38-39.txt (44/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15746, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1
+Author predicted: ['Titus_Livius']
+----- LOO FOR Titus_Livius_Ab Urbe Condita libri 40-42.txt (45/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15751, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.01
+Author predicted: ['Titus_Livius']
+----- LOO FOR Titus_Livius_Ab Urbe Condita libri 43-45.txt (46/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15783, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.01
+Author predicted: ['Titus_Livius']
+----- LOO FOR Ammianus_Marcellinus_Res gestae.txt (47/68) -----
+This is the only text by the author. Skipping.
+----- LOO FOR Apuleius_Apologia.txt (48/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15796, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1
+Author predicted: ['Cicero']
+----- LOO FOR Apuleius_Florida.txt (49/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15870, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1
+Author predicted: ['Apuleius']
+----- LOO FOR Apuleius_Metamorphoses.txt (50/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15667, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1000
+Author predicted: ['Cornelius_Tacitus']
+----- LOO FOR Augustinus_Hipponensis_Epistularum Selectio.txt (51/68) -----
+This is the only text by the author. Skipping.
+----- LOO FOR Aulus_Gellius_Noctes Atticae.txt (52/68) -----
+This is the only text by the author. Skipping.
+----- LOO FOR Columella_De re rustica.txt (53/68) -----
+This is the only text by the author. Skipping.
+----- LOO FOR Cornelius_Nepos_Vitae.txt (54/68) -----
+This is the only text by the author. Skipping.
+----- LOO FOR Curtius_Rufus_Historiae Alexandri Magni.txt (55/68) -----
+This is the only text by the author. Skipping.
+----- LOO FOR Quintilianus_Institutio Oratoria.txt (56/68) -----
+This is the only text by the author. Skipping.
+----- LOO FOR Sallustius_Bellum Iugurthinum.txt (57/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15792, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1
+Author predicted: ['Titus_Livius']
+----- LOO FOR Sallustius_De Catilinae coniuratione.txt (58/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15843, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 100
+Author predicted: ['Aulus_Gellius']
+----- LOO FOR Seneca_maior_Controversiae.txt (59/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15341, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.1
+Author predicted: ['Seneca_maior']
+----- LOO FOR Seneca_maior_Excerpta Controversiae.txt (60/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15720, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 100
+Author predicted: ['Seneca_maior']
+----- LOO FOR Seneca_maior_Suasoriae.txt (61/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15831, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1000
+Author predicted: ['Seneca_maior']
+----- LOO FOR Cornelius_Tacitus_Annales.txt (62/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15411, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.01
+Author predicted: ['Cornelius_Tacitus']
+----- LOO FOR Cornelius_Tacitus_De Origine et Situ Germanorum Liber.txt (63/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15869, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.01
+Author predicted: ['Cornelius_Tacitus']
+----- LOO FOR Cornelius_Tacitus_De Vita Iulii Agricolae.txt (64/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15866, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 1000
+Author predicted: ['Cornelius_Tacitus']
+----- LOO FOR Cornelius_Tacitus_Dialogus de Oratoribus.txt (65/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15865, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Best C: 0.1
+Author predicted: ['Quintilianus']
+----- LOO FOR Cornelius_Tacitus_Historiae.txt (66/68) -----
+FEATURE EXTRACTION
+task function words (#features=79) [Done]
+task words lengths (#features=22) [Done]
+task sentences lengths (#features=67) [Done]
+Training shape:  (15599, 168)
+Test shape:  (1, 168)
+CLASSIFICATION
+Best C: 0.01
+Author predicted: ['Cornelius_Tacitus']
+----- LOO FOR Plinius_minor_Epistolae.txt (67/68) -----
+This is the only text by the author. Skipping.
+----- LOO FOR Beda_Historiam ecclesiasticam gentis Anglorum.txt (68/68) -----
+This is the only text by the author. Skipping.
+----- FINAL SCORE -----
+Macro-F1: 0.542
+Micro-F1: 0.895
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
+Invalid -W option ignored: unknown warning category: 'ConvergenceWarning'
