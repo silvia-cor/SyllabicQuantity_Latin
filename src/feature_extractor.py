@@ -6,6 +6,7 @@ import nltk
 from nltk.corpus import stopwords
 import numpy as np
 from scipy.sparse import hstack, csr_matrix
+from sklearn.preprocessing import normalize
 import itertools
 import multiprocessing
 from joblib import Parallel, delayed
@@ -75,7 +76,7 @@ def _function_words_freq(documents, lang):
         mod_tokens = _tokenize(text)
         freqs = nltk.FreqDist(mod_tokens)
         nwords = len(mod_tokens)
-        funct_words_freq = [1000. * freqs[function_word] / nwords for function_word in function_words]
+        funct_words_freq = [freqs[function_word] / nwords for function_word in function_words]
         features.append(funct_words_freq)
     f = csr_matrix(features)
     return f
@@ -91,7 +92,7 @@ def _words_lengths_freq(documents, upto=23):
         tokens_len = [len(token) for token in mod_tokens]
         tokens_count = []
         for i in range(1, upto):
-            tokens_count.append(1000. * (sum(j >= i for j in tokens_len)) / nwords)
+            tokens_count.append((sum(j >= i for j in tokens_len)) / nwords)
         features.append(tokens_count)
     f = csr_matrix(features)
     return f
@@ -109,7 +110,7 @@ def _sentences_lengths_freq(documents, min=3, max=70):
             mod_tokens = _tokenize(sentence)
             sent_len.append(len(mod_tokens))
         for i in range(min, max):
-            sent_count.append(1000. * (sum(j >= i for j in sent_len)) / nsent)
+            sent_count.append((sum(j >= i for j in sent_len)) / nsent)
         features.append(sent_count)
     f = csr_matrix(features)
     return f
@@ -128,7 +129,7 @@ def _metric_scansion(documents):
 
 # vectorize the documents with tfidf and select the best features
 def _vector_select(doc_train, doc_test, y_train, type, min, max, feature_selection_ratio):
-    vectorizer = CountVectorizer(analyzer=type, ngram_range=(min, max))
+    vectorizer = TfidfVectorizer(analyzer=type, ngram_range=(min, max), sublinear_tf=True)
     f_train = vectorizer.fit_transform(doc_train)
     f_test = vectorizer.transform(doc_test)
     if feature_selection_ratio != 1:
@@ -157,6 +158,7 @@ class FeatureExtractor:
 
         """
         For each feature type, the corresponding function is called and a csr_matrix is created.
+        The matrix is normalized through l2.
         The matrix is then added orizontally (hstack) to the final matrix.
         Train and test are kept separate to properly fit on training set for n-grams vectorization and feature selection.
         :param doc_train: documents for training
@@ -181,23 +183,23 @@ class FeatureExtractor:
 
 
         if function_words_freq is not None:
-            f = _function_words_freq(self.doc_train, function_words_freq)
+            f = normalize(_function_words_freq(self.doc_train, function_words_freq))
             self.X_train = hstack((self.X_train, f))
-            f = _function_words_freq(self.doc_test, function_words_freq)
+            f = normalize(_function_words_freq(self.doc_test, function_words_freq))
             self.X_test = hstack((self.X_test, f))
             print(f'task function words (#features={f.shape[1]}) [Done]')
 
         if words_lengths_freq:
-            f = _words_lengths_freq(self.doc_train)
+            f = normalize(_words_lengths_freq(self.doc_train))
             self.X_train = hstack((self.X_train, f))
-            f = _words_lengths_freq(self.doc_test)
+            f = normalize(_words_lengths_freq(self.doc_test))
             self.X_test = hstack((self.X_test, f))
             print(f'task words lengths (#features={f.shape[1]}) [Done]')
 
         if sentence_lengths_freq:
-            f = _sentences_lengths_freq(self.doc_train)
+            f = normalize(_sentences_lengths_freq(self.doc_train))
             self.X_train = hstack((self.X_train, f))
-            f = _sentences_lengths_freq(self.doc_test)
+            f = normalize(_sentences_lengths_freq(self.doc_test))
             self.X_test = hstack((self.X_test, f))
             print(f'task sentences lengths (#features={f.shape[1]}) [Done]')
 

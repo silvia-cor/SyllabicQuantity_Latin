@@ -1,12 +1,16 @@
 import feature_extractor
 from sklearn.model_selection import StratifiedKFold, LeaveOneGroupOut
-from sklearn.svm import SVC
+from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, make_scorer
 import sys
 import numpy as np
 import itertools
+if not sys.warnoptions:
+    import os, warnings
+    warnings.simplefilter("ignore")
+    os.environ["PYTHONWARNINGS"] = ('ignore::UserWarning,ignore::ConvergenceWarning,ignore::RuntimeWarning')
 
 #prepares dataset for loo (transform everything into numpy array)
 def __data_for_loo(dataset):
@@ -57,14 +61,10 @@ def loo_crossval(dataset, features_params):
 
             print('CLASSIFICATION')
             # sometimes the learning method does not converge; this is to suppress a lot of warnings
-            if not sys.warnoptions:
-                import os, warnings
-                warnings.simplefilter("ignore")
-                os.environ["PYTHONWARNINGS"] = ('ignore::UserWarning,ignore::ConvergenceWarning,ignore::RuntimeWarning')
-            param_grid = {'C': [0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000]}
+            param_grid = {'C': [0.001, 0.01, 0.1, 1, 10, 100, 1000]}
             #param_grid = {'C': [1, 10]}
-            cls = GridSearchCV(LogisticRegression(max_iter=1000), param_grid, n_jobs=4)
-            # cls = GridSearchCV(SVC(kernel='linear', random_state=42), param_grid, n_jobs=4)
+            cls = GridSearchCV(LinearSVC(class_weight='balanced'),
+                               param_grid, scoring=make_scorer(f1_score, average='macro'), n_jobs=6)
             cls.fit(X_train, y_train)
             print('Best C:', cls.best_params_['C'])
             y_pred = cls.predict(X_test)
@@ -103,18 +103,14 @@ def kfold_crossval(dataset, features_params, n_splits=5):
 
         print('CLASSIFICATION')
         # sometimes the learning method does not converge; this is to suppress a lot of warnings
-        if not sys.warnoptions:
-            import os, warnings
-            warnings.simplefilter("ignore")
-            os.environ["PYTHONWARNINGS"] = ('ignore::UserWarning,ignore::ConvergenceWarning,ignore::RuntimeWarning')
-        param_grid= {'C': [0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000]}
+        param_grid= {'C': [0.001, 0.01, 0.1, 1, 10, 100, 1000]}
         #param_grid = {'C': [1, 10]}
-        cls = GridSearchCV(LogisticRegression(max_iter=1000), param_grid, n_jobs=4)
-        #cls = GridSearchCV(SVC(kernel='linear', random_state=42), param_grid, n_jobs=4)
+        cls = GridSearchCV(LinearSVC(class_weight='balanced'),
+                           param_grid, scoring=make_scorer(f1_score, average='macro'), n_jobs=6)
         cls.fit(X_train, y_train)
         print('Best C:', cls.best_params_['C'])
         y_pred = cls.predict(X_test)
-        f1 = f1_score(y_test, y_pred, average='weighted')
+        f1 = f1_score(y_test, y_pred, average='macro')
         print(f'F1: {f1:.3f}')
         y_preds.extend(y_pred)
         y_tests.extend(y_test)

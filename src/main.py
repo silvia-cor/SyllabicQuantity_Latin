@@ -3,7 +3,7 @@ import dataset_loader, classification
 #list of authors that will be added in the dataset
 authors = ['Vitruvius', 'Cicero', 'Iulius_Caesar', 'Suetonius', 'Titus_Livius',
            'Ammianus_Marcellinus', 'Apuleius', 'Augustinus_Hipponensis', 'Aulus_Gellius',
-           'Columella', 'Petronius', 'Cornelius_Nepos', 'Curtius_Rufus', 'Quintilianus',
+           'Columella', 'Cornelius_Nepos', 'Curtius_Rufus', 'Quintilianus',
            'Sallustius', 'Seneca_maior', 'Cornelius_Tacitus', 'Plinius_minor', 'Beda']
 
 dataset_path = "../dataset"  # change here for directory location
@@ -20,7 +20,7 @@ features_params = {'feature_selection_ratio': 1,
                    'word_ngrams_range': [2, 2],
                    'char_ngrams': False,
                    'char_ngrams_range': [3, 3],
-                   'syll_ngrams': False,
+                   'syll_ngrams': True,
                    'syll_ngrams_range': [3, 3]}
 
 #classification.kfold_crossval(dataset, features_params, n_splits=5)
