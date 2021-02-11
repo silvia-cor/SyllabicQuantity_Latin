@@ -1,46 +1,16 @@
 import re
 import nltk
-from nltk import sent_tokenize
-import string
 import urllib.request, urllib.error, urllib.parse
 import os, sys
 import numpy as np
-
-# split text into sentences
-def _split_sentences(text):
-    # strip() removes blank spaces before and after string
-    sentences = [t.strip() for t in nltk.tokenize.sent_tokenize(text) if t.strip()]
-    for i, sentence in enumerate(sentences):
-        unmod_tokens = nltk.tokenize.word_tokenize(sentence)  # tokenizes the single sentence
-        mod_tokens = ([token for token in unmod_tokens
-                       if any(char.isalpha() for char in token)])  # checks whether all the chars are alphabetic
-        if len(mod_tokens) < 8:  # if the sentence is less than 8 words long, it is...
-            if i < len(sentences) - 1:
-                sentences[i + 1] = sentences[i] + ' ' + sentences[i + 1]  # combined with the next sentence
-            else:
-                sentences[i - 1] = sentences[i - 1] + ' ' + sentences[i]  # or the previous one if it was the last sentence
-            sentences.pop(i)  # and deleted as a standalone sentence
-    return sentences
-
-
-# group sentences into fragments of window_size sentences
-def _group_sentences(sentences, window_size):
-    new_fragments = []
-    nbatches = len(sentences) // window_size
-    if len(sentences) % window_size > 0:
-        nbatches += 1
-    for i in range(nbatches):
-        offset = i * window_size
-        new_fragments.append(' '.join(sentences[offset:offset + window_size]))
-    return new_fragments
+import itertools
 
 
 # ------------------------------------------------------------------------
 # class to download, clean and split the texts, building the dataset
 # ------------------------------------------------------------------------
 class DatasetBuilder:
-    def __init__(self, authors, dir_path="../dataset", download=False, cleaning=False,
-                 n_sentences=5):
+    def __init__(self, authors, dir_path="../dataset", download=False, cleaning=False, n_sentences=10):
 
         """
         :param authors: list of authors names
@@ -73,12 +43,9 @@ class DatasetBuilder:
         for i, file in enumerate(os.listdir(self.dir_path)):
             file_path = self.dir_path + '/' + file
             text = open(file_path, "r").read()
-            # get author name
-            author = [authors.index(author) for author in authors if author in file]
+            author = authors.index(file.split('-',1)[0]) # get author index by splitting the file name
             self.titles_list.append(file) #append title
-            if len(author) > 1:
-                print('ALERT! More than one author name for %s' % file)
-            self._splitter(text, author[0], i)
+            self._splitter(text, author, i)
 
 
     # STEP 1: download the texts from Corpus Corporum
@@ -106,7 +73,7 @@ class DatasetBuilder:
         for index, author_titles in enumerate(authors_titles):
             for title in author_titles:
                 # create text file (where the download will be saved)
-                text_file = open(self.dir_path + '/' + self.authors[index] + '_' + title + '.txt', 'w')
+                text_file = open(self.dir_path + '/' + self.authors[index] + '-' + title + '.txt', 'w')
                 title = title.replace(" ", "%20")  # the url doesn't work with whitespaces
                 # create link to the title's mainpage
                 title_link = 'http://www.mlat.uzh.ch/MLS/work_header.php?lang=0&corpus=5&table=' + \
@@ -131,16 +98,32 @@ class DatasetBuilder:
     # STEP 2: clean the text (modify the document)
     def _remove_tags(self, path_file):
         text = open(path_file, "r").read()
-        text = re.sub('<META(.*)>(\n.*)*<\/teiHeader>|<head(.*)>(.*)<\/head>|<app(.*)>(.*)<\/app>|<foreign(.*)>(.*)<\/foreign>|<argument(.*)>(.*\n)*<\/(.*)argument>|<note(.*)>(.*)<\/note>|<rf(.*)>(.*)<\/rf>|<i(.*)>(.*)<\/i>|<date(.*)>(.*)<\/date>|<[^<]+>|[0-9]',"", text)
-        text = re.sub('quote(.*)>(.*)<\/quote>',"",text)
+        text = re.sub("\n+", " ", text)
+        text = re.sub("\s+", " ", text)
+        text = re.sub('<META(.|\n)*<\/teiHeader>', "", text)
+        text = re.sub('<head(?:(?!<head|\/head)[\s\S])*\/head>', "", text)
+        text = re.sub('&quot\;(?:(?!&quot\;|&quot\;)[\s\S])*&quot\;',"",text)
+        text = re.sub('<quote(?:(?!<quote|\/quote)[\s\S])*\/quote>', "", text)
+        text = re.sub('<app(?:(?!<app|\/app)[\s\S])*\/app>', "", text)
+        text = re.sub('<bibl(?:(?!<bibl|\/bibl)[\s\S])*\/bibl>', "", text)
+        text = re.sub('<foreign(?:(?!<foreign|\/foreign)[\s\S])*\/foreign>', "", text)
+        text = re.sub('<note(?:(?!<note|\/note)[\s\S])*\/note>', "", text)
+        text = re.sub('<date(?:(?!<date|\/date)[\s\S])*\/date>', "", text)
+        text = re.sub('<ref(?:(?!<rf|\/rf)[\s\S])*\/ref>', "", text)
+        text = re.sub('<i(?:(?!<i|\/i)[\s\S])*\/i>', "", text)
+        text = re.sub('<argument(?:(?!<argument|\/argument)[\s\S])*\/argument>', "", text)
+        text = re.sub('<[^<]*?>', "", text)
+        text = re.sub('[0-9]', "", text)
         text = text.lower()
         text = text.replace('v', 'u')
+        text = text.replace('j', 'i')
         text = re.sub('\.\s+(?=\.)|\.\.+',"",text)
-        text = re.sub("(\s)+", " ", text)
-        text = text.replace("\n", "")
+        text = re.sub("\n+", " ", text)
+        text = re.sub("\s+", " ", text)
         text = re.sub("\(|\)|\[|\]", "", text)
         text = re.sub("\—|\–|\-|\_", "", text)
-        text = re.sub("\‹|\›|\=|\/|\\|\~|\§|\&quot|\&|\*|\^|\“|\”", "", text)
+        text = re.sub("\‹|\›|\»|\«|\=|\/|\\|\~|\§|\*|\#|\@|\^|\“|\”", "", text)
+        text = re.sub("\&dagger;|\&amacr;|\&emacr;|\&imacr;|\&omacr;|\&umacr;|\&lsquo;|\&rsquo;|\&rang;|\&lang;|\&lsqb;", "", text)
         text = re.sub("\?|\!|\:|\;", ".", text)
         text = text.replace("'", "")
         text = text.replace('"', '')
@@ -154,6 +137,8 @@ class DatasetBuilder:
         text = text.replace("é", "e")
         text = text.replace("í", "i")
         text = text.replace("ó", "o")
+        text = re.sub("\n+", " ", text)
+        text = re.sub("\s+", " ", text)
         with open(path_file, "w") as f:
             f.write(text)
 
@@ -161,11 +146,70 @@ class DatasetBuilder:
     def _splitter(self, text, author, title):
         text_fragments = []
         text_fragments.append(text) #add whole text
-        sentences = _split_sentences(text)
-        text_fragments.extend(_group_sentences(sentences, self.n_sentences))
+        sentences = self.__split_sentences(text)
+        text_fragments.extend(self.__group_sentences(sentences, self.n_sentences))
         self.data.append(text_fragments)
         # add corresponding title label, one for each fragment
         self.titles_labels.append([title] * len(text_fragments))
         if author is not None:
             # add corresponding author labels, one for each fragment
             self.authors_labels.append([author] * len(text_fragments))
+
+    # ------------------------------------------------------------------------
+    # aiding functions (split and group sentences)
+    # ------------------------------------------------------------------------
+
+    # split text into sentences
+    def __split_sentences(self, text):
+        # strip() removes blank spaces before and after string
+        sentences = [t.strip() for t in nltk.tokenize.sent_tokenize(text) if t.strip()]
+        for i, sentence in enumerate(sentences):
+            unmod_tokens = nltk.tokenize.word_tokenize(sentence)  # tokenizes the single sentence
+            mod_tokens = ([token for token in unmod_tokens
+                           if any(char.isalpha() for char in token)])  # checks whether all the chars are alphabetic
+            if len(mod_tokens) < 8:  # if the sentence is less than 8 words long, it is...
+                if i < len(sentences) - 1:
+                    sentences[i + 1] = sentences[i] + ' ' + sentences[i + 1]  # combined with the next sentence
+                else:
+                    sentences[i - 1] = sentences[i - 1] + ' ' + sentences[
+                        i]  # or the previous one if it was the last sentence
+                sentences.pop(i)  # and deleted as a standalone sentence
+        return sentences
+
+    # group sentences into fragments of window_size sentences
+    # not overlapping
+    def __group_sentences(self, sentences, window_size):
+        new_fragments = []
+        nbatches = len(sentences) // window_size
+        if len(sentences) % window_size > 0:
+            nbatches += 1
+        for i in range(nbatches):
+            offset = i * window_size
+            new_fragments.append(' '.join(sentences[offset:offset + window_size]))
+        return new_fragments
+
+    # ------------------------------------------------------------------------
+    # functions to prepare for k-fold or loo cross-validation (called in classification)
+    # ------------------------------------------------------------------------
+
+    # prepares dataset for k-fold-cross-validation
+    # takes out first element in data and labels (which is the whole text) and transform in numpy array
+    def data_for_kfold(self):
+        authors = np.array(self.authors)
+        titles_list = np.array(self.titles_list)
+        data = np.array([sub_list[i] for sub_list in self.data for i in range(1, len(sub_list))])
+        authors_labels = np.array([sub_list[i] for sub_list in self.authors_labels for i in range(1, len(sub_list))])
+        titles_labels = np.array([sub_list[i] for sub_list in self.titles_labels for i in range(1, len(sub_list))])
+        return authors, titles_list, data, authors_labels, titles_labels
+
+    # prepares dataset for loo (transform everything into numpy array)
+    def data_for_loo(self):
+        authors = np.array(self.authors)
+        titles_list = np.array(self.titles_list)
+        data = np.array(list(itertools.chain.from_iterable(self.data)), dtype=object)
+        authors_labels = np.array(list(itertools.chain.from_iterable(self.authors_labels)))
+        titles_labels = np.array(list(itertools.chain.from_iterable(self.titles_labels)))
+        return authors, titles_list, data, authors_labels, titles_labels
+
+
+
