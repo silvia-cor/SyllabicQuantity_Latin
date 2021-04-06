@@ -152,7 +152,7 @@ def _clean_texts(file_path):
     text = text.replace(" .", ".")
     text = text.replace(" ,", ",")
     text = re.sub('(\.)+', ".", text)
-    text = re.sub('(\,)+', ",", text)
+    text = re.sub('(\,)+', "", text)
     text = text.replace("á", "a")
     text = text.replace("é", "e")
     text = text.replace("í", "i")

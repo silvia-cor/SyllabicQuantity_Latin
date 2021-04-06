@@ -1,8 +1,7 @@
 import nltk
 from nltk.corpus import stopwords
-from cltk.prosody.latin.macronizer import Macronizer
-from cltk.prosody.latin.scanner import Scansion
-from sklearn.feature_extraction.text import CountVectorizer
+from cltk.prosody.lat.macronizer import Macronizer
+from cltk.prosody.lat.scanner import Scansion
 import numpy as np
 import itertools
 
@@ -27,8 +26,8 @@ def get_function_words(lang):
     else:
         raise ValueError('{} not in scope!'.format(lang))
 
-# tokenize text
-def tokenize(text):
+# tokenize text without punctuation
+def tokenize_nopunct(text):
     unmod_tokens = nltk.word_tokenize(text)
     return [token.lower() for token in unmod_tokens if any(char.isalpha() for char in token)] # checks whether all the chars are alphabetic
 
@@ -37,25 +36,22 @@ def tokenize(text):
 # functions to distort the text
 # ------------------------------------------------------------------------
 
-# # transform texts into fake metric scansion
-# # requires entire dataset
-# def fake_metric(docs):
-#     anal_words = CountVectorizer(analyzer='word', token_pattern=r'[^\s]+', ngram_range=(1, 1)).fit(docs)
-#     vocabulary = anal_words.vocabulary_
-#     for vocab in vocabulary:
-#         n = len(vocab) // 3 if len(vocab) // 3 > 1 else 1
-#         anal_words.vocabulary_[vocab] = np.random.choice(np.asarray(['u', 'x', '-']), size=n, replace=True).tolist()
-#     dis_texts = []
-#     for doc in docs:
-#         mod_tokens = tokenize(doc)
-#         tokenizer = anal_words.build_analyzer()
-#         for doc in docs:
-#             dis_text = [vocabulary.get(item, vocabulary.get('<unk>')) for item in tokenizer(doc)]
-#             encoded_texts.append(encoded_text)
-#         dis_tokens = [token if token in function_words else ('*' * len(token)) for token in mod_tokens]
-#             dis_texts.append(' '.join(dis_tokens))
-#         return dis_texts
+# transform values in dictionary into fake SQ sequences
+# TODO: x same probability? It's the end of the sentence...
+def make_fake_vocab(analyzer):
+    for vocab in analyzer.vocabulary_:
+        n = len(vocab) // 3 if len(vocab) // 3 > 1 else 1
+        analyzer.vocabulary_[vocab] = ''.join(np.random.choice(np.asarray(['u', 'x', '-']), size=n, replace=True).tolist())
+    return analyzer
 
+# transform texts into fake metric scansion
+def fake_metric_scansion(docs, analyzer):
+    dis_texts = []
+    vocabulary = analyzer.vocabulary_
+    for doc in docs:
+        dis_tokens = [vocabulary.get(token) for token in tokenize_nopunct(doc)]
+        dis_texts.append(''.join(dis_tokens))
+    return dis_texts
 
 
 # transform text into metric scansion
@@ -75,20 +71,34 @@ def metric_scansion(docs):
 def dis_DVMA(docs, function_words):
     dis_texts = []
     for doc in docs:
-        mod_tokens = tokenize(doc)
-        dis_tokens = [token if token in function_words else ('*' * len(token)) for token in mod_tokens]
-        dis_texts.append(' '.join(dis_tokens))
+        tokens = nltk.word_tokenize(doc)
+        dis_text = ''
+        for token in tokens:
+            if dis_text != '' and token != '.':
+                dis_text += ' '
+            if token in function_words or token == '.':
+                dis_text += token
+            else:
+                dis_text += '*' * len(token)
+        dis_texts.append(dis_text)
     return dis_texts
 
 # DV-SA text distortion method from Stamatatos_2018:
 # Every word not in function_words is replaced with an asterisk (*).
-# for word embedding
+# for character embedding
 def dis_DVSA(docs, function_words):
     dis_texts = []
     for doc in docs:
-        mod_tokens = tokenize(doc)
-        dis_tokens = [token if token in function_words else '*' for token in mod_tokens]
-        dis_texts.append(' '.join(dis_tokens))
+        tokens = nltk.word_tokenize(doc)
+        dis_text = ''
+        for token in tokens:
+            if dis_text != '' and token != '.':
+                dis_text += ' '
+            if token in function_words or token == '.':
+                dis_text += token
+            else:
+                dis_text += '*'
+        dis_texts.append(dis_text)
     return dis_texts
 
 # DV-EX text distortion method from Stamatatos_2018:
@@ -98,10 +108,16 @@ def dis_DVSA(docs, function_words):
 def dis_DVEX(docs, function_words):
     dis_texts = []
     for doc in docs:
-        mod_tokens = tokenize(doc)
-        dis_tokens = [token if token in function_words or len(token) == 1
-                      else token[0] + ('*' * (len(token) - 2)) + token[len(token) - 1] for token in mod_tokens]
-        dis_texts.append(' '.join(dis_tokens))
+        tokens = nltk.word_tokenize(doc)
+        dis_text = ''
+        for token in tokens:
+            if dis_text != '' and token != '.':
+                dis_text += ' '
+            if token in function_words or token == '.' or len(token) == 1:
+                dis_text += token
+            else:
+                dis_text += token[0] + ('*' * (len(token) - 2)) + token[len(token) - 1]
+        dis_texts.append(dis_text)
     return dis_texts
 
 # DV-EX text distortion method from Stamatatos_2018:
@@ -111,10 +127,16 @@ def dis_DVEX(docs, function_words):
 def dis_DVL2(docs, function_words):
     dis_texts = []
     for doc in docs:
-        mod_tokens = tokenize(doc)
-        dis_tokens = [token if token in function_words or len(token) == 1
-                      else ('*' * (len(token) - 2)) + token[len(token) - 2]  + token[len(token) - 1] for token in mod_tokens]
-        dis_texts.append(' '.join(dis_tokens))
+        tokens = nltk.word_tokenize(doc)
+        dis_text = ''
+        for token in tokens:
+            if dis_text != '' and token != '.':
+                dis_text += ' '
+            if token in function_words or token == '.' or len(token) == 1:
+                dis_text += token
+            else:
+                dis_text += ('*' * (len(token) - 2)) + token[len(token) - 2]  + token[len(token) - 1]
+        dis_texts.append(dis_text)
     return dis_texts
 
 
@@ -136,7 +158,7 @@ def _split_sentences(text):
     # strip() removes blank spaces before and after string
     sentences = [t.strip() for t in nltk.tokenize.sent_tokenize(text) if t.strip()]
     for i, sentence in enumerate(sentences):
-        mod_tokens = tokenize(sentence)
+        mod_tokens = tokenize_nopunct(sentence)
         if len(mod_tokens) < 5:  # if the sentence is less than 5 words long, it is...
             if i < len(sentences) - 1:
                 sentences[i + 1] = sentences[i] + ' ' + sentences[i + 1]  # combined with the next sentence

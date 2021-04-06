@@ -4,6 +4,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import f1_score, make_scorer
 import sys
 import pickle
+import numpy as np
 from feature_extractor import featuresExtractor
 from general.helpers import data_for_kfold, data_for_loo
 from general.significance import significance_test
@@ -20,8 +21,6 @@ if not sys.warnoptions:
 
 def SVM_classification(dataset, features_params, cv_method, pickle_path):
     assert isinstance(cv_method, (StratifiedKFold, LeaveOneGroupOut)), 'CV method must be either kfold or loo'
-    assert sum([features_params['DVMA'], features_params['DVSA'], features_params['DVEX'], features_params['DVL2'], features_params['SQ']]) == 1, \
-        'Only a distortion or SQ method allowed'
     if os.path.exists(pickle_path):
         with open(pickle_path, 'rb') as handle:
             df = pickle.load(handle)
@@ -32,7 +31,7 @@ def SVM_classification(dataset, features_params, cv_method, pickle_path):
     if method_name in df:
         print(f'Experiment {method_name} already done!')
     else:
-        print(f'----- EXPERIMENT {method_name} -----')
+        print(f'----- SVM EXPERIMENT {method_name} -----')
         if isinstance(cv_method, StratifiedKFold):
             y_all_pred, y_all_te, best_Cs, tot_features = _kfold_crossval(dataset, features_params, cv_method)
         else:
@@ -48,35 +47,44 @@ def SVM_classification(dataset, features_params, cv_method, pickle_path):
         micro_f1 = f1_score(df['True']['labels'], df[method_name]['preds'], average='micro')
         df[method_name]['macroF1'] = macro_f1
         df[method_name]['microF1'] = micro_f1
-    print('----- F1 SCORE -----')
+    print('----- THE END -----')
+    print('Tot. features (mean):', int(np.round(np.mean(df[method_name]['tot_features']))))
     print(f'Macro-F1: {df[method_name]["macroF1"]:.3f}')
     print(f'Micro-F1: {df[method_name]["microF1"] :.3f}')
     with open(pickle_path, 'wb') as handle:
         pickle.dump(df, handle)
-    for baseline in ['Baseline-DVMA', 'Baseline-DVSA', 'Baseline-DVEX', 'Baseline-DVL2']:
+
+    #significance test if SQ are in the features with another method
+    #significance test is against the same method without SQ
+    if ' + SQ' in method_name:
+        baseline = method_name.split(' + SQ')[0]
         if baseline in df:
             significance_test(df['True']['labels'], df[baseline]['preds'], df[method_name]['preds'], baseline)
         else:
             print(f'No {baseline} saved, significance test cannot be performed :/')
+    else:
+        print('No significance test requested')
 
 
 
 #generates the name of the method used to save the results
 def _create_method_name(features_params):
-    if features_params['DVMA'] == True:
-        return 'Baseline-DVMA'
-    if features_params['DVSA'] == True:
-        return 'Baseline-DVSA'
-    if features_params['DVEX'] == True:
-        return 'Baseline-DVEX'
-    if features_params['DVL2'] == True:
-        return 'Baseline-DVL2'
+    methods = []
+    dv_methods = ['DVMA', 'DVSA', 'DVEX', 'DVL2']
+    method_name = ''
+    for method in dv_methods:
+        if features_params[method]:
+            methods.append(method)
+    if len(methods) == 4:
+        method_name = 'ALLDV'
     else:
-        method_name = ''
-        if features_params['SQ'] == True:
-            method_name += 'SQ' + str(features_params['SQ_ngrams'])
-        method_name += ' FS(' + str(features_params['feature_selection_ratio']) + ')'
-        return method_name
+        method_name = ' + '.join(methods)
+    if features_params['SQ']:
+        if method_name != '':
+            method_name += ' + '
+        method_name += 'SQ' + '[' + str(features_params['SQ_ngrams'][0]) + ',' + str(features_params['SQ_ngrams'][1]) + ']'
+        method_name += '|FS(' + str(features_params['feature_selection_ratio']) + ')'
+    return method_name
 
 
 #perform kfold cross-validation using a LinearSVM

@@ -3,7 +3,7 @@ from sklearn.feature_selection import SelectKBest, chi2
 import nltk
 from scipy.sparse import hstack, csr_matrix
 from sklearn.preprocessing import normalize
-from general.helpers import get_function_words, tokenize, metric_scansion, dis_DVMA, dis_DVSA, dis_DVEX, dis_DVL2
+from general.helpers import get_function_words, tokenize_nopunct, metric_scansion, dis_DVMA, dis_DVSA, dis_DVEX, dis_DVL2
 
 
 # ------------------------------------------------------------------------
@@ -14,7 +14,7 @@ from general.helpers import get_function_words, tokenize, metric_scansion, dis_D
 def _function_words_freq(documents, function_words):
     features = []
     for text in documents:
-        mod_tokens = tokenize(text)
+        mod_tokens = tokenize_nopunct(text)
         freqs = nltk.FreqDist(mod_tokens)
         nwords = len(mod_tokens)
         funct_words_freq = [freqs[function_word] / nwords for function_word in function_words]
@@ -27,7 +27,7 @@ def _function_words_freq(documents, function_words):
 def _word_lengths_freq(documents, upto=26):
     features = []
     for text in documents:
-        mod_tokens = tokenize(text)
+        mod_tokens = tokenize_nopunct(text)
         nwords = len(mod_tokens)
         tokens_len = [len(token) for token in mod_tokens]
         tokens_count = []
@@ -46,7 +46,7 @@ def _sentence_lengths_freq(documents, min=1, max=101):
         sent_len = []
         sent_count = []
         for sentence in sentences:
-            mod_tokens = tokenize(sentence)
+            mod_tokens = tokenize_nopunct(sentence)
             sent_len.append(len(mod_tokens))
         for i in range(min, max):
             sent_count.append((sum(j >= i for j in sent_len)) / nsent)
