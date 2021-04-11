@@ -12,6 +12,7 @@ from torch.autograd import Variable
 from sklearn.metrics import f1_score
 from general.helpers import data_for_kfold
 from dataset_prep.NN_dataloader import NN_DataLoader
+from general.significance import significance_test
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -153,14 +154,14 @@ def _test(model, NN_params, test_generator, load_path):
     model.load_state_dict(torch.load(load_path))
     model.eval()
     with torch.no_grad():
-        all_preds = []
-        all_labels = []
+        fold_preds = []
+        fold_labels = []
         for encodings, targets in test_generator:
             preds = model(NN_params, encodings)
             preds = torch.argmax(preds, dim=1)
-            all_preds.extend(preds.detach().clone().cpu().numpy())
-            all_labels.extend(targets.numpy())
-    return all_labels, all_preds
+            fold_preds.extend(preds.detach().clone().cpu().numpy())
+            fold_labels.extend(targets.numpy())
+    return fold_preds, fold_labels
 
 
 def NN_classification(dataset, NN_params, kfold, n_sent, pickle_path):
@@ -175,6 +176,9 @@ def NN_classification(dataset, NN_params, kfold, n_sent, pickle_path):
     if method_name in df:
         print(f'NN experiment {method_name} already done!')
     else:
+        y_all_pred = []
+        y_all_te = []
+        val_f1s = []
         print(f'----- NN EXPERIMENT {method_name} -----')
         authors, titles, data, authors_labels, titles_labels = data_for_kfold(dataset)
         for i, (trval_index, test_index) in enumerate(kfold.split(data, authors_labels)):
@@ -185,23 +189,37 @@ def NN_classification(dataset, NN_params, kfold, n_sent, pickle_path):
             y_te = authors_labels[test_index]
             dataset = NN_DataLoader(x_trval, x_te, y_trval, y_te, NN_params, batch_size=128)
             model = Penta_NN(NN_params, dataset.vocab_lens, len(authors)).to(device)
-            val_f1s = _train(model, NN_params, dataset.train_generator, dataset.val_generator, f'../NN_methods/{n_sent}sent/{method_name}.pt', n_epochs=50)
-            y_all_te, y_all_pred = _test(model, NN_params, dataset.test_generator, f'../NN_methods/{n_sent}sent/{method_name}.pt')
-            if 'True' not in df:
-                df['True'] = {}
-                df['True']['labels'] = y_all_te
-            df[method_name] = {}
-            df[method_name]['preds'] = y_all_pred
-            df[method_name]['val_f1s'] = val_f1s
-            macro_f1 = f1_score(df['True']['labels'], df[method_name]['preds'], average='macro')
-            micro_f1 = f1_score(df['True']['labels'], df[method_name]['preds'], average='micro')
-            df[method_name]['macroF1'] = macro_f1
-            df[method_name]['microF1'] = micro_f1
-        print('----- F1 SCORE -----')
-        print(f'Macro-F1: {df[method_name]["macroF1"]:.3f}')
-        print(f'Micro-F1: {df[method_name]["microF1"] :.3f}')
-        with open(pickle_path, 'wb') as handle:
-            pickle.dump(df, handle)
+            val_f1 = _train(model, NN_params, dataset.train_generator, dataset.val_generator, f'../NN_methods/{n_sent}sent/{method_name}.pt', n_epochs=500)
+            fold_preds, fold_labels = _test(model, NN_params, dataset.test_generator, f'../NN_methods/{n_sent}sent/{method_name}.pt')
+            y_all_pred.extend(fold_preds)
+            y_all_te.extend(fold_labels)
+            val_f1s.append(val_f1)
+        if 'True' not in df:
+            df['True'] = {}
+            df['True']['labels'] = y_all_te
+        df[method_name] = {}
+        df[method_name]['preds'] = y_all_pred
+        df[method_name]['val_f1s'] = val_f1s
+        macro_f1 = f1_score(df['True']['labels'], df[method_name]['preds'], average='macro')
+        micro_f1 = f1_score(df['True']['labels'], df[method_name]['preds'], average='micro')
+        df[method_name]['macroF1'] = macro_f1
+        df[method_name]['microF1'] = micro_f1
+    print('----- F1 SCORE -----')
+    print(f'Macro-F1: {df[method_name]["macroF1"]:.3f}')
+    print(f'Micro-F1: {df[method_name]["microF1"] :.3f}')
+    with open(pickle_path, 'wb') as handle:
+        pickle.dump(df, handle)
+
+    # significance test if SQ are in the features with another method
+    # significance test is against the same method without SQ
+    if ' + SQ' in method_name:
+        baseline = method_name.split(' + SQ')[0]
+        if baseline in df:
+            significance_test(df['True']['labels'], df[baseline]['preds'], df[method_name]['preds'], baseline)
+        else:
+            print(f'No {baseline} saved, significance test cannot be performed :/')
+    else:
+        print('No significance test requested')
 
 
 #generates the name of the method used to save the results

@@ -84,11 +84,11 @@ class NN_DataLoader:
 
         # create the train/val/test generator (for batches)
         train_dataset = NN_BaseDataset(x_tr, y_tr)
-        self.train_generator = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=3, collate_fn=self._collate_padding)
+        self.train_generator = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=5, collate_fn=self._collate_padding)
         val_dataset = NN_BaseDataset(x_val, y_val)
-        self.val_generator = DataLoader(val_dataset, batch_size, shuffle=True, num_workers=3, collate_fn=self._collate_padding)
+        self.val_generator = DataLoader(val_dataset, batch_size, shuffle=True, num_workers=5, collate_fn=self._collate_padding)
         test_dataset = NN_BaseDataset(x_te, y_te)
-        self.test_generator = DataLoader(test_dataset, batch_size, shuffle=True, num_workers=3, collate_fn=self._collate_padding)
+        self.test_generator = DataLoader(test_dataset, batch_size, shuffle=True, num_workers=5, collate_fn=self._collate_padding)
 
 
     def _collate_padding(self, batch):

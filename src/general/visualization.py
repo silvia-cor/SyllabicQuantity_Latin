@@ -14,8 +14,7 @@ def f1_scatterplot(exp_path):
     macro_f1s = []
     micro_f1s = []
     for method in df:
-        if method == 'True': pass
-        else:
+        if 'SQ' in method:
             tots_features.append(np.round(np.mean(df[method]['tot_features'])))
             macro_f1s.append(df[method]['macroF1'])
             micro_f1s.append(df[method]['microF1'])
@@ -42,7 +41,3 @@ def val_performance_visual(models, n_epochs):
     plt.xticks(np.arange(0, n_epochs+1, step=n_epochs/10))
     plt.savefig('../output/NN_val_F1.png')
     plt.show()
-
-
-#f1_scatter('../output/kfold_results.csv')
-

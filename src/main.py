@@ -18,32 +18,25 @@ kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
 
 
 
-# mns = [3,4,5,6,7]
-# mxs = [3,4,5,6,7]
-# fss = [1]
-#
-# for fs in fss:
-#     for mn in mns:
-#         for mx in mxs:
-#             if mn>mx: pass
-#             else:
-#                 features_params = {'feature_selection_ratio': fs,
-#                                   'function_words_freq': True,
-#                                    'word_lengths_freq': True,
-#                                    'sentence_lengths_freq': True,
-#                                    'DVMA': False,
-#                                    'DVSA': False,
-#                                    'DVEX': False,
-#                                    'DVL2': False,
-#                                    'SQ': True,
-#                                    'SQ_ngrams': [mn, mx]}
-#                 SVM_classification(dataset, features_params, kfold, svm_kfold_path)
 
-NN_params = {'DVMA': False,
+features_params = {'feature_selection_ratio': 0.3,
+                   'function_words_freq': True,
+                   'word_lengths_freq': True,
+                   'sentence_lengths_freq': True,
+                   'DVMA': True,
+                   'DVSA': True,
+                   'DVEX': True,
+                   'DVL2': True,
+                   'SQ': True,
+                   'SQ_ngrams': [3,7]}
+#SVM_classification(dataset, features_params, kfold, svm_kfold_path)
+
+
+NN_params = {'DVMA': True,
              'DVSA': False,
              'DVEX': False,
              'DVL2': False,
              'FAKE': False,
-             'SQ': True}
+             'SQ': False}
 
 NN_classification(dataset, NN_params, kfold, n_sent, nn_path)
