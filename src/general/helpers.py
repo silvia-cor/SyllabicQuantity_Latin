@@ -48,8 +48,9 @@ def make_fake_vocab(analyzer):
 def fake_metric_scansion(docs, analyzer):
     dis_texts = []
     vocabulary = analyzer.vocabulary_
+    tokenizer = analyzer.build_analyzer()
     for doc in docs:
-        dis_tokens = [vocabulary.get(token) for token in tokenize_nopunct(doc)]
+        dis_tokens = [vocabulary.get(token) for token in tokenizer(doc)]
         dis_texts.append(''.join(dis_tokens))
     return dis_texts
 

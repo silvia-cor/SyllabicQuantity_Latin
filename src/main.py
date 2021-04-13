@@ -23,8 +23,8 @@ features_params = {'feature_selection_ratio': 0.3,
                    'function_words_freq': True,
                    'word_lengths_freq': True,
                    'sentence_lengths_freq': True,
-                   'DVMA': True,
-                   'DVSA': True,
+                   'DVMA': False,
+                   'DVSA': False,
                    'DVEX': True,
                    'DVL2': True,
                    'SQ': True,
@@ -32,11 +32,11 @@ features_params = {'feature_selection_ratio': 0.3,
 #SVM_classification(dataset, features_params, kfold, svm_kfold_path)
 
 
-NN_params = {'DVMA': True,
+NN_params = {'DVMA': False,
              'DVSA': False,
              'DVEX': False,
              'DVL2': False,
-             'FAKE': False,
+             'FAKE': True,
              'SQ': False}
 
 NN_classification(dataset, NN_params, kfold, n_sent, nn_path)

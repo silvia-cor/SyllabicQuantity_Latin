@@ -1,5 +1,6 @@
 from sklearn.model_selection import StratifiedKFold
 import numpy as np
+import random
 from tqdm import tqdm
 import os
 import pickle
@@ -8,13 +9,18 @@ import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
 from functools import reduce
-from torch.autograd import Variable
 from sklearn.metrics import f1_score
 from general.helpers import data_for_kfold
 from dataset_prep.NN_dataloader import NN_DataLoader
 from general.significance import significance_test
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# for reproducibility
+torch.backends.cudnn.deterministic = True
+random.seed(42)
+torch.manual_seed(42)
+torch.cuda.manual_seed(42)
+np.random.seed(42)
 
 
 class Penta_NN(nn.Module):
@@ -84,26 +90,27 @@ class Penta_NN(nn.Module):
             out_dvl2 = self.flat(hid_dvl2)
             outputs.append(out_dvl2)
 
-        merge_out = reduce(lambda x,y: torch.cat((x,y)), outputs)
+        merge_out = torch.cat(outputs, 1)
         drop_out = self.drop(merge_out)
         final_out = self.dense(F.relu(drop_out))
         return final_out
 
     def conv_block(self, input, conv_layer):
         conv_out = conv_layer(input.transpose(1, 2).contiguous())
-        activated =  F.relu(conv_out)
+        activated = F.relu(conv_out)
         max_out = F.max_pool1d(activated, conv_out.size()[2]).squeeze(2)
         return max_out
 
-def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs, epochs_stop = 10):
-    #optimizer = optim.SGD(model.parameters(), lr=1e-2, momentum=0.9, nesterov=True)
+
+def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs, epochs_stop=10):
+    # optimizer = optim.SGD(model.parameters(), lr=1e-2, momentum=0.9, nesterov=True)
     optimizer = optim.Adam(model.parameters())
     criterion = nn.CrossEntropyLoss().to(device)
     f1scores = []
     f1_max = 0
     epochs_no_improv = 0
     for epoch in range(n_epochs):
-        #training
+        # training
         epoch_loss = []
         with tqdm(train_generator, unit="batch") as train:
             model.train()
@@ -134,7 +141,7 @@ def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs
                 torch.save(model.state_dict(), save_path)
             else:
                 epochs_no_improv += 1
-            print('Val macro-F1:', f1score)
+            print(f'Val macro-F1: {f1score:.3f}')
             f1scores.append(f1score)
             if epochs_no_improv == epochs_stop:
                 print("Early stopping!")

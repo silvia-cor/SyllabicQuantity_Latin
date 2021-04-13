@@ -1,11 +1,11 @@
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 import numpy as np
+import random
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
 from general.helpers import get_function_words, make_fake_vocab, fake_metric_scansion, metric_scansion, dis_DVMA, dis_DVEX, dis_DVSA, dis_DVL2
-from general.utils import pickled_resource
 
 # pytorch Dataset class (for DataLoader)
 class NN_BaseDataset(Dataset):
@@ -42,7 +42,7 @@ class NN_DataLoader:
         if self.NN_params['FAKE']:
             # fake syllabic quantities
             # Make a word-based CountVectorizer based on the entire dataset
-            anal_words = CountVectorizer(analyzer='word', ngram_range=(1, 1)).fit(x_trval+x_te)
+            anal_words = CountVectorizer(analyzer='word', ngram_range=(1, 1)).fit(np.concatenate((x_trval, x_te)))
             print(f'Word analyzer [Done]')
             # Transform the vocabulary so that each word corresponds to a random SQ sequence
             self.fake_vocab = make_fake_vocab(anal_words)
@@ -72,7 +72,7 @@ class NN_DataLoader:
         if self.NN_params['DVEX']:
             # DVEX distortion
             x_dis = dis_DVEX(x_tr, self.function_words)
-            self.anal_DVEX =  self._make_analyzer(CountVectorizer(analyzer='char', ngram_range=(1, 1)), x_dis)
+            self.anal_DVEX = self._make_analyzer(CountVectorizer(analyzer='char', ngram_range=(1, 1)), x_dis)
             self.vocab_lens['DVEX'] = len(self.anal_DVEX.vocabulary_)
             print(f'DVEX analyzer [Done]')
         if self.NN_params['DVL2']:
@@ -84,11 +84,11 @@ class NN_DataLoader:
 
         # create the train/val/test generator (for batches)
         train_dataset = NN_BaseDataset(x_tr, y_tr)
-        self.train_generator = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=5, collate_fn=self._collate_padding)
+        self.train_generator = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
         val_dataset = NN_BaseDataset(x_val, y_val)
-        self.val_generator = DataLoader(val_dataset, batch_size, shuffle=True, num_workers=5, collate_fn=self._collate_padding)
+        self.val_generator = DataLoader(val_dataset, batch_size, shuffle=True, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
         test_dataset = NN_BaseDataset(x_te, y_te)
-        self.test_generator = DataLoader(test_dataset, batch_size, shuffle=True, num_workers=5, collate_fn=self._collate_padding)
+        self.test_generator = DataLoader(test_dataset, batch_size, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
 
 
     def _collate_padding(self, batch):
@@ -116,6 +116,12 @@ class NN_DataLoader:
         targets = torch.Tensor(labels).long()
         return encodings, targets
 
+    # set the seed for the DataLoader worder
+    def _seed_worker(self, worker_id):
+        worker_seed = torch.initial_seed() % 2 ** 32
+        np.random.seed(worker_seed)
+        random.seed(worker_seed)
+
     def _make_analyzer(self, vectorizer, docs):
         analyzer = vectorizer.fit(docs)
         analyzer.vocabulary_['<unk>'] = len(analyzer.vocabulary_)
@@ -131,3 +137,5 @@ class NN_DataLoader:
             encoded_text = [vocab.get(item, vocab.get('<unk>')) for item in tokenizer(doc)]
             encoded_texts.append(encoded_text)
         return encoded_texts
+
+
