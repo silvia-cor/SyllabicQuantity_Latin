@@ -60,7 +60,7 @@ class NN_DataLoader:
         if self.NN_params['DVMA']:
             # DVMA distortion
             x_dis = dis_DVMA(x_tr, self.function_words)
-            self.anal_DVMA= self._make_analyzer(CountVectorizer(analyzer='char', ngram_range=(1,1)), x_dis)
+            self.anal_DVMA = self._make_analyzer(CountVectorizer(analyzer='char', ngram_range=(1,1)), x_dis)
             self.vocab_lens['DVMA'] = len(self.anal_DVMA.vocabulary_)
             print(f'DVMA analyzer [Done]')
         if self.NN_params['DVSA']:
@@ -86,7 +86,7 @@ class NN_DataLoader:
         train_dataset = NN_BaseDataset(x_tr, y_tr)
         self.train_generator = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
         val_dataset = NN_BaseDataset(x_val, y_val)
-        self.val_generator = DataLoader(val_dataset, batch_size, shuffle=True, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
+        self.val_generator = DataLoader(val_dataset, batch_size, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
         test_dataset = NN_BaseDataset(x_te, y_te)
         self.test_generator = DataLoader(test_dataset, batch_size, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
 

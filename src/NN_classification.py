@@ -146,6 +146,7 @@ def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs
             if epochs_no_improv == epochs_stop:
                 print("Early stopping!")
                 break
+    #model.load_state_dict(save_path)
     model.train()
     for encodings, targets in val_generator:
         optimizer.zero_grad()
@@ -154,7 +155,7 @@ def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs
         loss = criterion(preds, targets)
         loss.backward()
         optimizer.step()
-        torch.save(model.state_dict(), save_path)
+    torch.save(model.state_dict(), save_path)
     return f1scores
 
 def _test(model, NN_params, test_generator, load_path):
@@ -172,6 +173,7 @@ def _test(model, NN_params, test_generator, load_path):
 
 
 def NN_classification(dataset, NN_params, kfold, n_sent, pickle_path):
+    os.makedirs(f'../NN_methods/{n_sent}sent', exist_ok=True)
     assert isinstance(kfold, StratifiedKFold), 'Only kfold CV implemented for NN'
     assert not (NN_params['FAKE'] and NN_params['SQ']), 'Can have FAKE or SQ channel, but not both'
     if os.path.exists(pickle_path):
