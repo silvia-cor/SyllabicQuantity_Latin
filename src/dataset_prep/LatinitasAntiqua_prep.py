@@ -2,6 +2,7 @@ import re
 import urllib.request, urllib.error, urllib.parse
 import os, sys
 from general.helpers import splitter
+import pathlib
 
 
 # list of authors that will be added in the dataset
@@ -32,6 +33,8 @@ class dataset_LatinitasAntiqua:
         :param dir_path: path to the dataset directory, default: "../dataset/LatinitasAntiqua"
         :param n_sentences: number of sentences forming a fragment, default: 10
         """
+
+        os.makedirs(pathlib.Path(dir_path).parent, exist_ok=True)
 
         #if the directory doesn't exist, download and clean the texts
         if not os.path.exists(dir_path):

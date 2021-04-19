@@ -31,7 +31,7 @@ def get_function_words(lang):
 # tokenize text without punctuation
 def tokenize_nopunct(text):
     unmod_tokens = nltk.word_tokenize(text)
-    return [token.lower() for token in unmod_tokens if any(char.isalpha() for char in token)] # checks whether all the chars are alphabetic
+    return [token.lower() for token in unmod_tokens if any(char.isalpha() for char in token)]  # checks whether all the chars are alphabetic
 
 
 # ------------------------------------------------------------------------
@@ -63,7 +63,7 @@ def fake_metric_scansion(docs, analyzer):
 # to do: parallelize
 def metric_scansion(docs):
     macronizer = Macronizer('tag_ngram_123_backoff')
-    scanner = Scansion(clausula_length=100000) # clausula_length was 13, it didn't get the string before that point (it goes backward)
+    scanner = Scansion(clausula_length=100000)  # clausula_length was 13, it didn't get the string before that point (it goes backward)
     scanned_texts = [scanner.scan_text(macronizer.macronize_text(doc)) for doc in docs]
     scanned_texts = [''.join(scanned_text) for scanned_text in scanned_texts]  # concatenate the sentences
     return scanned_texts
@@ -142,7 +142,7 @@ def dis_DVL2(docs, function_words):
             if token in function_words or token == '.' or len(token) == 1:
                 dis_text += token
             else:
-                dis_text += ('*' * (len(token) - 2)) + token[len(token) - 2]  + token[len(token) - 1]
+                dis_text += ('*' * (len(token) - 2)) + token[len(token) - 2] + token[len(token) - 1]
         dis_texts.append(dis_text)
     return dis_texts
 
