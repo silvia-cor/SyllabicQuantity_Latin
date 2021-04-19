@@ -17,6 +17,7 @@ latin_function_words = ['et', 'in', 'de', 'ad', 'non', 'ut', 'cum', 'per', 'a', 
                         'circa', 'quidem', 'supra', 'ante', 'adhuc', 'seu', 'apud', 'olim', 'statim', 'satis', 'ob',
                         'quoniam', 'postea', 'nunquam', 'semper', 'licet', 'uidelicet', 'quoque', 'uelut', 'quot']
 
+
 # return list of function words
 def get_function_words(lang):
     if lang == 'latin':
@@ -25,6 +26,7 @@ def get_function_words(lang):
         return stopwords.words(lang)
     else:
         raise ValueError('{} not in scope!'.format(lang))
+
 
 # tokenize text without punctuation
 def tokenize_nopunct(text):
@@ -44,6 +46,7 @@ def make_fake_vocab(analyzer):
         analyzer.vocabulary_[vocab] = ''.join(np.random.choice(np.asarray(['u', 'x', '-']), size=n, replace=True).tolist())
     return analyzer
 
+
 # transform texts into fake metric scansion
 def fake_metric_scansion(docs, analyzer):
     dis_texts = []
@@ -57,7 +60,7 @@ def fake_metric_scansion(docs, analyzer):
 
 # transform text into metric scansion
 # macronizing and scanning the texts
-#to do: parallelize
+# to do: parallelize
 def metric_scansion(docs):
     macronizer = Macronizer('tag_ngram_123_backoff')
     scanner = Scansion(clausula_length=100000) # clausula_length was 13, it didn't get the string before that point (it goes backward)
@@ -84,6 +87,7 @@ def dis_DVMA(docs, function_words):
         dis_texts.append(dis_text)
     return dis_texts
 
+
 # DV-SA text distortion method from Stamatatos_2018:
 # Every word not in function_words is replaced with an asterisk (*).
 # for character embedding
@@ -101,6 +105,7 @@ def dis_DVSA(docs, function_words):
                 dis_text += '*'
         dis_texts.append(dis_text)
     return dis_texts
+
 
 # DV-EX text distortion method from Stamatatos_2018:
 # Every word not in function_words is masked by replacing each of its characters with an asterisk (*), except first and last one.
@@ -120,6 +125,7 @@ def dis_DVEX(docs, function_words):
                 dis_text += token[0] + ('*' * (len(token) - 2)) + token[len(token) - 1]
         dis_texts.append(dis_text)
     return dis_texts
+
 
 # DV-EX text distortion method from Stamatatos_2018:
 # Every word not in function_words is masked by replacing each of its characters with an asterisk (*), except last 2 ones.
@@ -145,14 +151,15 @@ def dis_DVL2(docs, function_words):
 # functions to split the text into fragments of (n_sentences) sentences
 # ------------------------------------------------------------------------
 
-#split text in fragments made of (n_sentences) sentences
-#also adds the entire text in the first index
+# split text in fragments made of (n_sentences) sentences
+# also adds the entire text in the first index
 def splitter(text, n_sentences):
     text_fragments = []
     text_fragments.append(text) #add whole text
     sentences = _split_sentences(text)
     text_fragments.extend(_group_sentences(sentences, n_sentences))
     return text_fragments
+
 
 # split text into single sentences
 def _split_sentences(text):
@@ -167,6 +174,7 @@ def _split_sentences(text):
                 sentences[i - 1] = sentences[i - 1] + ' ' + sentences[i]  # or the previous one if it was the last sentence
             sentences.pop(i)  # and deleted as a standalone sentence
     return sentences
+
 
 # group sentences into fragments of window_size sentences
 # not overlapping
@@ -184,6 +192,7 @@ def _group_sentences(sentences, window_size):
 # functions to prepare the dataset for k-fold or loo cross-validation
 # ------------------------------------------------------------------------
 
+
 # prepares dataset for k-fold-cross-validation
 # takes out first element in data and labels (which is the whole text) and transform in numpy array
 def data_for_kfold(dataset):
@@ -193,6 +202,7 @@ def data_for_kfold(dataset):
     authors_labels = np.array([sub_list[i] for sub_list in dataset.authors_labels for i in range(1, len(sub_list))])
     titles_labels = np.array([sub_list[i] for sub_list in dataset.titles_labels for i in range(1, len(sub_list))])
     return authors, titles, data, authors_labels, titles_labels
+
 
 # prepares dataset for loo (transform everything into numpy array)
 def data_for_loo(dataset):

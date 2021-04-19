@@ -19,6 +19,7 @@ if not sys.warnoptions:
 # class to do (classical ML) classification
 # ------------------------------------------------------------------------
 
+
 def SVM_classification(dataset, features_params, cv_method, pickle_path):
     assert isinstance(cv_method, (StratifiedKFold, LeaveOneGroupOut)), 'CV method must be either kfold or loo'
     if os.path.exists(pickle_path):
@@ -54,8 +55,8 @@ def SVM_classification(dataset, features_params, cv_method, pickle_path):
     with open(pickle_path, 'wb') as handle:
         pickle.dump(df, handle)
 
-    #significance test if SQ are in the features with another method
-    #significance test is against the same method without SQ
+    # significance test if SQ are in the features with another method
+    # significance test is against the same method without SQ
     if ' + SQ' in method_name:
         baseline = method_name.split(' + SQ')[0]
         if baseline in df:
@@ -66,8 +67,7 @@ def SVM_classification(dataset, features_params, cv_method, pickle_path):
         print('No significance test requested')
 
 
-
-#generates the name of the method used to save the results
+# generates the name of the method used to save the results
 def _create_method_name(features_params):
     methods = []
     dv_methods = ['DVMA', 'DVSA', 'DVEX', 'DVL2']

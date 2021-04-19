@@ -24,13 +24,13 @@ np.random.seed(42)
 
 
 class Penta_NN(nn.Module):
-    def __init__(self, NN_params, vocab_lens, n_labels, kernel_sizes=[3,4,5]):
+    def __init__(self, NN_params, vocab_lens, n_labels, kernel_sizes=[3,4,5,6,7]):
         super().__init__()
         dim_dense = 0
         if NN_params['FAKE']:
             self.embed_FAKE = nn.Embedding(vocab_lens['FAKE'], 16)
             self.cnn_FAKE = nn.ModuleList([nn.Conv1d(16, 100, kernel_size) for kernel_size in kernel_sizes])
-            dim_dense += 100*(len(kernel_sizes))
+            dim_dense += 100 * (len(kernel_sizes))
         if NN_params['SQ']:
             self.embed_SQ = nn.Embedding(vocab_lens['SQ'], 16)
             self.cnn_SQ = nn.ModuleList([nn.Conv1d(16, 100, kernel_size) for kernel_size in kernel_sizes])
@@ -157,6 +157,7 @@ def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs
         torch.save(model.state_dict(), save_path)
     return f1scores
 
+
 def _test(model, NN_params, test_generator, load_path):
     model.load_state_dict(torch.load(load_path))
     model.eval()
@@ -171,7 +172,7 @@ def _test(model, NN_params, test_generator, load_path):
     return fold_preds, fold_labels
 
 
-def NN_classification(dataset, NN_params, kfold, n_sent, pickle_path):
+def NN_classification(dataset, NN_params, kfold, pickle_path, dataset_name):
     assert isinstance(kfold, StratifiedKFold), 'Only kfold CV implemented for NN'
     assert not (NN_params['FAKE'] and NN_params['SQ']), 'Can have FAKE or SQ channel, but not both'
     if os.path.exists(pickle_path):
@@ -196,8 +197,8 @@ def NN_classification(dataset, NN_params, kfold, n_sent, pickle_path):
             y_te = authors_labels[test_index]
             dataset = NN_DataLoader(x_trval, x_te, y_trval, y_te, NN_params, batch_size=128)
             model = Penta_NN(NN_params, dataset.vocab_lens, len(authors)).to(device)
-            val_f1 = _train(model, NN_params, dataset.train_generator, dataset.val_generator, f'../NN_methods/{n_sent}sent/{method_name}.pt', n_epochs=500)
-            fold_preds, fold_labels = _test(model, NN_params, dataset.test_generator, f'../NN_methods/{n_sent}sent/{method_name}.pt')
+            val_f1 = _train(model, NN_params, dataset.train_generator, dataset.val_generator, f'../NN_methods/{dataset_name}/{method_name}.pt', n_epochs=500)
+            fold_preds, fold_labels = _test(model, NN_params, dataset.test_generator, f'../NN_methods/{dataset_name}/{method_name}.pt')
             y_all_pred.extend(fold_preds)
             y_all_te.extend(fold_labels)
             val_f1s.append(val_f1)
@@ -219,8 +220,8 @@ def NN_classification(dataset, NN_params, kfold, n_sent, pickle_path):
 
     # significance test if SQ are in the features with another method
     # significance test is against the same method without SQ
-    if ' + SQ' in method_name:
-        baseline = method_name.split(' + SQ')[0]
+    if ' + SQ' in method_name or ' + FAKE' in method_name:
+        baseline = method_name.split(' + ')[0]
         if baseline in df:
             significance_test(df['True']['labels'], df[baseline]['preds'], df[method_name]['preds'], baseline)
         else:
@@ -229,7 +230,7 @@ def NN_classification(dataset, NN_params, kfold, n_sent, pickle_path):
         print('No significance test requested')
 
 
-#generates the name of the method used to save the results
+# generates the name of the method used to save the results
 def _create_method_name(NN_params):
     methods = []
     dv_methods = ['DVMA', 'DVSA', 'DVEX', 'DVL2']
