@@ -8,7 +8,7 @@ from dataset_prep.MedLatin_prep import dataset_MedLatin
 
 if __name__ == '__main__':
     n_sent = 10
-    dataset_name = 'MedLatin'
+    dataset_name = 'LatinitasAntiqua'
     data_path = f"../pickles/{dataset_name}/dataset_{dataset_name}_{n_sent}sent.pickle"
     svm_kfold_path = f'../pickles/{dataset_name}/svm_kfold_exp_{n_sent}sent.pickle'
     svm_loo_path = f'../pickles/{dataset_name}/svm_loo_exp_{n_sent}sent.pickle'
@@ -38,8 +38,9 @@ if __name__ == '__main__':
 
     NN_params = {'DVMA': False,
                  'DVSA': False,
-                 'DVEX': False,
+                 'DVEX': True,
                  'DVL2': False,
                  'FAKE': False,
                  'SQ': True}
-    NN_classification(dataset, NN_params, kfold, dataset, n_sent, nn_path)
+
+    NN_classification(dataset, NN_params, kfold, dataset_name, n_sent, nn_path)

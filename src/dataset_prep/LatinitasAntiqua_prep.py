@@ -1,7 +1,7 @@
 import re
 import urllib.request, urllib.error, urllib.parse
 import os, sys
-from general.helpers import splitter
+from general.helpers import splitter, metric_scansion
 import pathlib
 
 
@@ -58,6 +58,7 @@ class dataset_LatinitasAntiqua:
         self.authors = authors
         self.titles = os.listdir(dir_path)
         self.data = []
+        self.data_cltk = []
         self.authors_labels = []
         self.titles_labels = []
         for i, file in enumerate(self.titles):
@@ -66,6 +67,7 @@ class dataset_LatinitasAntiqua:
             author = authors.index(file.split('-', 1)[0])  # get author index by splitting the file name
             fragments = splitter(text, n_sent)
             self.data.append(fragments)
+            self.data_cltk.append(metric_scansion(fragments))
             # add corresponding title label, one for each fragment
             self.titles_labels.append([i] * len(fragments))
             if author is not None:

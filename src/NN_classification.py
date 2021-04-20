@@ -1,3 +1,5 @@
+from typing import List
+
 from sklearn.model_selection import StratifiedKFold
 import numpy as np
 import random
@@ -13,6 +15,7 @@ from sklearn.metrics import f1_score
 from general.helpers import data_for_kfold
 from dataset_prep.NN_dataloader import NN_DataLoader
 from general.significance import significance_test
+from pathlib import Path
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # for reproducibility
@@ -27,33 +30,39 @@ class Penta_NN(nn.Module):
     def __init__(self, NN_params, vocab_lens, n_labels, kernel_sizes=[3,4,5,6,7]):
         super().__init__()
         dim_dense = 0
+        emb_length = 32
+        out_size = 100
         if NN_params['FAKE']:
-            self.embed_FAKE = nn.Embedding(vocab_lens['FAKE'], 16)
-            self.cnn_FAKE = nn.ModuleList([nn.Conv1d(16, 100, kernel_size) for kernel_size in kernel_sizes])
-            dim_dense += 100 * (len(kernel_sizes))
+            self.embed_FAKE = nn.Embedding(vocab_lens['FAKE'], emb_length)
+            self.cnn_FAKE = nn.ModuleList([nn.Conv1d(emb_length, out_size, kernel_size) for kernel_size in kernel_sizes])
+            dim_dense += out_size * (len(kernel_sizes))
         if NN_params['SQ']:
-            self.embed_SQ = nn.Embedding(vocab_lens['SQ'], 16)
-            self.cnn_SQ = nn.ModuleList([nn.Conv1d(16, 100, kernel_size) for kernel_size in kernel_sizes])
-            dim_dense += 100 * (len(kernel_sizes))
+            self.embed_SQ = nn.Embedding(vocab_lens['SQ'], emb_length) # Conv1d (Cin, Cout, kernels)
+            self.cnn_SQ = nn.ModuleList([nn.Conv1d(emb_length, out_size, kernel_size) for kernel_size in kernel_sizes])
+            self.cnn_SQ2 = nn.ModuleList([nn.Conv1d(out_size, out_size, kernel_size) for kernel_size in kernel_sizes])
+            self.cnn_SQ3 = nn.ModuleList([nn.Conv1d(out_size, out_size, kernel_size) for kernel_size in kernel_sizes])
+            dim_dense += out_size * (len(kernel_sizes))
         if NN_params['DVMA']:
-            self.embed_DVMA= nn.Embedding(vocab_lens['DVMA'], 32)
-            self.cnn_DVMA = nn.Conv1d(32, 100, 3)
-            dim_dense += 100
+            self.embed_DVMA= nn.Embedding(vocab_lens['DVMA'], emb_length)
+            self.cnn_DVMA = nn.Conv1d(emb_length, out_size, 3)
+            dim_dense += out_size
         if NN_params['DVSA']:
-            self.embed_DVSA= nn.Embedding(vocab_lens['DVSA'], 32)
-            self.cnn_DVSA = nn.Conv1d(32, 100, 3)
-            dim_dense += 100
+            self.embed_DVSA= nn.Embedding(vocab_lens['DVSA'], emb_length)
+            self.cnn_DVSA = nn.Conv1d(emb_length, out_size, 3)
+            dim_dense += out_size
         if NN_params['DVEX']:
-            self.embed_DVEX= nn.Embedding(vocab_lens['DVEX'], 32)
-            self.cnn_DVEX = nn.Conv1d(32, 100, 3)
-            dim_dense += 100
+            self.embed_DVEX= nn.Embedding(vocab_lens['DVEX'], emb_length)
+            self.cnn_DVEX = nn.Conv1d(emb_length, out_size, 3)
+            dim_dense += out_size
         if NN_params['DVL2']:
-            self.embed_DVL2= nn.Embedding(vocab_lens['DVL2'], 32)
-            self.cnn_DVL2 = nn.Conv1d(32, 100, 3)
-            dim_dense += 100
+            self.embed_DVL2= nn.Embedding(vocab_lens['DVL2'], emb_length)
+            self.cnn_DVL2 = nn.Conv1d(emb_length, out_size, 3)
+            dim_dense += out_size
         self.flat = nn.Flatten()
         self.drop = nn.Dropout(0.5)
-        self.dense = nn.Linear(dim_dense, n_labels)
+        self.dense1 = nn.Linear(dim_dense, 1024)
+        self.dense2 = nn.Linear(1024, 128)
+        self.dense3 = nn.Linear(128, n_labels)
 
     def forward(self, NN_params, encodings):
         outputs = []
@@ -65,13 +74,13 @@ class Penta_NN(nn.Module):
             outputs.append(out_fake)
         if NN_params['SQ']:
             hid_sq = self.embed_SQ(encodings['SQ'].to(device))
-            hid_sq = [self.conv_block(hid_sq, conv) for conv in self.cnn_SQ]
+            hid_sq = [self.conv_block(hid_sq, convs) for convs in zip(self.cnn_SQ, self.cnn_SQ2, self.cnn_SQ3)]
             hid_sq = torch.cat(hid_sq, 1)
             out_sq = self.flat(hid_sq)
             outputs.append(out_sq)
         if NN_params['DVMA']:
             hid_dvma = self.embed_DVMA(encodings['DVMA'].to(device))
-            hid_dvma = self.conv_block(hid_dvma, self.cnn_DVMA)
+            hid_dvma = self.conv_block(hid_dvma, self.cnn_DVMA)  # (N, Cout)
             out_dvma = self.flat(hid_dvma)
             outputs.append(out_dvma)
         if NN_params['DVSA']:
@@ -81,7 +90,7 @@ class Penta_NN(nn.Module):
             outputs.append(out_dvsa)
         if NN_params['DVEX']:
             hid_dvex = self.embed_DVEX(encodings['DVEX'].to(device))
-            hid_dvex = self.conv_block(hid_dvex, self.cnn_DVEX)
+            hid_dvex = self.conv_block(hid_dvex, [self.cnn_DVEX])
             out_dvex = self.flat(hid_dvex)
             outputs.append(out_dvex)
         if NN_params['DVL2']:
@@ -90,32 +99,59 @@ class Penta_NN(nn.Module):
             out_dvl2 = self.flat(hid_dvl2)
             outputs.append(out_dvl2)
 
-        merge_out = torch.cat(outputs, 1)
-        drop_out = self.drop(merge_out)
-        final_out = self.dense(F.relu(drop_out))
-        return final_out
+        x = torch.cat(outputs, 1)
+        x = self.drop(x)
+        x = self.dense1(F.relu(x))
+        # x = self.drop(x)
+        x = self.dense2(F.relu(x))
+        # x = self.drop(x)
+        x = self.dense3(F.relu(x))
+        return x
 
-    def conv_block(self, input, conv_layer):
-        conv_out = conv_layer(input.transpose(1, 2).contiguous())
-        activated = F.relu(conv_out)
-        max_out = F.max_pool1d(activated, conv_out.size()[2]).squeeze(2)
-        return max_out
+    def conv_block(self, input, conv_layers:List[nn.Module]):   # input is (N, L, Cin)
+        # input has shape (Batch-size, Length of doc, Embedding-size) in documentation (N, L, Cin)
+        x = input.transpose(1, 2).contiguous()  # (N, Cin, L)
+
+        maxpool = nn.MaxPool1d(5)
+
+        for i,conv_layer in enumerate(conv_layers):
+            x = conv_layer(x)  # (N, Cout, L)
+            x = F.relu(x)  # (N, Cout, L)
+            if i<len(conv_layers)-1:
+                x = maxpool(x)
+
+        L = x.size()[2]
+        x = F.max_pool1d(x, L)  # (N, Cout, 1)
+        x = x.squeeze(2)  # (N, Cout)
+        return x  # output (N, Cout)
+
+
+def xavier_uniform(model:nn.Module):
+    for p in model.parameters():
+        if p.dim() > 1 and p.requires_grad:
+            nn.init.xavier_uniform_(p)
 
 
 def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs, epochs_stop=500):
     # optimizer = optim.SGD(model.parameters(), lr=1e-2, momentum=0.9, nesterov=True)
-    optimizer = optim.Adam(model.parameters())
+    os.makedirs(Path(save_path).parent, exist_ok=True)
+    optimizer = optim.Adam(lr=0.001, params=model.parameters())
+    xavier_uniform(model)
+
     criterion = nn.CrossEntropyLoss().to(device)
     f1scores = []
-    f1_max = 0
     epochs_no_improv = 0
+    f1score, f1_max, tr_f1score = 0, 0, 0
     for epoch in range(n_epochs):
         # training
         epoch_loss = []
+        # train = tqdm(train_generator, unit="batch")
         with tqdm(train_generator, unit="batch") as train:
             model.train()
+            all_preds = []
+            all_labels = []
             for encodings, targets in train:
-                train.set_description(f"Epoch {epoch+1}")
+                # train.set_description(f"Epoch {epoch+1}")
                 optimizer.zero_grad()
                 targets = targets.to(device)
                 preds = model(NN_params, encodings)
@@ -123,7 +159,15 @@ def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs
                 loss.backward()
                 optimizer.step()
                 epoch_loss.append(loss.item())
-                train.set_postfix(loss=np.mean(epoch_loss))
+                preds = torch.argmax(preds, dim=1)
+                all_preds.extend(preds.detach().clone().cpu().numpy())
+                all_labels.extend(targets.detach().clone().cpu().numpy())
+                train.set_description(f'Epoch {epoch+1} loss={np.mean(epoch_loss):.5f} '
+                                      f'tr-macro-F1={tr_f1score:.3f} '
+                                      f'macro-F1={f1score:.3f} '
+                                      f'max-macro-F1={f1_max:.3f}')
+            tr_f1score = f1_score(all_labels, all_preds, average='macro')
+
         #evaluation
         model.eval()
         with torch.no_grad():
@@ -141,11 +185,11 @@ def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs
                 torch.save(model.state_dict(), save_path)
             else:
                 epochs_no_improv += 1
-            print(f'Val macro-F1: {f1score:.3f}')
             f1scores.append(f1score)
             if epochs_no_improv == epochs_stop:
                 print("Early stopping!")
                 break
+
     model.load_state_dict(save_path)
     model.train()
     for encodings, targets in val_generator:
@@ -190,14 +234,16 @@ def NN_classification(dataset, NN_params, kfold, dataset_name, n_sent, pickle_pa
         y_all_te = []
         val_f1s = []
         print(f'----- NN EXPERIMENT {method_name} -----')
-        authors, titles, data, authors_labels, titles_labels = data_for_kfold(dataset)
+        authors, titles, data, authors_labels, titles_labels, data_cltk = data_for_kfold(dataset)
         for i, (trval_index, test_index) in enumerate(kfold.split(data, authors_labels)):
             print(f'----- K-FOLD EXPERIMENT {i + 1} -----')
             x_trval = data[trval_index]
+            x_trval_cltk = data_cltk[trval_index]
             x_te = data[test_index]
+            x_te_cltk = data_cltk[test_index]
             y_trval = authors_labels[trval_index]
             y_te = authors_labels[test_index]
-            dataset = NN_DataLoader(x_trval, x_te, y_trval, y_te, NN_params, batch_size=128)
+            dataset = NN_DataLoader(x_trval, x_trval_cltk, x_te, x_te_cltk, y_trval, y_te, NN_params, batch_size=50)
             model = Penta_NN(NN_params, dataset.vocab_lens, len(authors)).to(device)
             val_f1 = _train(model, NN_params, dataset.train_generator, dataset.val_generator, f'../NN_methods/{dataset_name}/{method_name}.pt', n_epochs=500)
             fold_preds, fold_labels = _test(model, NN_params, dataset.test_generator, f'../NN_methods/{dataset_name}/{method_name}.pt')
