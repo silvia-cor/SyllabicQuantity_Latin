@@ -24,7 +24,7 @@ np.random.seed(42)
 
 
 class Penta_NN(nn.Module):
-    def __init__(self, NN_params, vocab_lens, n_labels, kernel_sizes=[3,4,5,6,7]):
+    def __init__(self, NN_params, vocab_lens, n_labels, kernel_sizes=[3,4,5]):
         super().__init__()
         dim_dense = 0
         if NN_params['FAKE']:
