@@ -90,7 +90,7 @@ def _create_method_name(features_params):
 #perform kfold cross-validation using a LinearSVM
 #training and testing only on fragments
 def _kfold_crossval(dataset, features_params, kfold):
-    authors, titles, data, authors_labels, titles_labels = data_for_kfold(dataset)
+    authors, titles, data, data_cltk, authors_labels, titles_labels = data_for_kfold(dataset)
     print('Tot. fragments:', len(data))
     y_all_pred = []
     y_all_te = []
@@ -100,11 +100,13 @@ def _kfold_crossval(dataset, features_params, kfold):
     for i, (train_index, test_index) in enumerate(kfold.split(data, authors_labels)):
         print(f'----- K-FOLD EXPERIMENT {i + 1} -----')
         x_tr = data[train_index]
+        train_cltk = data_cltk[train_index]
         x_te = data[test_index]
+        test_cltk = data_cltk[test_index]
         y_tr = authors_labels[train_index]
         y_te = authors_labels[test_index]
         print('FEATURE EXTRACTION')
-        X_tr, X_te = featuresExtractor(x_tr, x_te, y_tr, **features_params)
+        X_tr, X_te = featuresExtractor(x_tr, x_te, train_cltk, test_cltk, y_tr, **features_params)
         print("Training shape: ", X_tr.shape)
         print("Test shape: ", X_te.shape)
         tot_features.append(X_tr.shape[1])
@@ -129,7 +131,7 @@ def _kfold_crossval(dataset, features_params, kfold):
 # perform leave-one-out cross-validation
 # training on fragments and whole texts, test only on whole texts
 def _loo_crossval(dataset, features_params, loo):
-    authors, titles, data, authors_labels, titles_labels = data_for_loo(dataset)
+    authors, titles, data, data_cltk, authors_labels, titles_labels = data_for_loo(dataset)
     print('Tot. fragments + whole texts:', len(data))
     y_all_pred = []
     y_all_te = []
@@ -145,11 +147,13 @@ def _loo_crossval(dataset, features_params, loo):
             print("This is the only text by the author. Skipping.")
         else:
             x_tr = data[train_index]
+            train_cltk = data_cltk[train_index]
             x_te = [data[test_index[0]]]
+            test_cltk = [data_cltk[test_index[0]]]
             y_tr = authors_labels[train_index]
             y_te = [authors_labels[test_index[0]]]
             print('FEATURE EXTRACTION')
-            X_tr, X_te = featuresExtractor(x_tr, x_te, y_tr, **features_params)
+            X_tr, X_te = featuresExtractor(x_tr, x_te, train_cltk, test_cltk, y_tr, **features_params)
             print("Training shape: ", X_tr.shape)
             print("Test shape: ", X_te.shape)
             tot_features.append(X_tr.shape[1])

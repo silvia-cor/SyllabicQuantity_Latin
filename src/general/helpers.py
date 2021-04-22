@@ -1,9 +1,13 @@
+import multiprocessing
+
 import nltk
+from joblib import Parallel, delayed
 from nltk.corpus import stopwords
 from cltk.prosody.lat.macronizer import Macronizer
 from cltk.prosody.lat.scanner import Scansion
 import numpy as np
 import itertools
+from tqdm import tqdm
 
 # ------------------------------------------------------------------------
 # functions for managing the text processing
@@ -64,7 +68,7 @@ def fake_metric_scansion(docs, analyzer):
 def metric_scansion(docs):
     macronizer = Macronizer('tag_ngram_123_backoff')
     scanner = Scansion(clausula_length=100000)  # clausula_length was 13, it didn't get the string before that point (it goes backward)
-    scanned_texts = [scanner.scan_text(macronizer.macronize_text(doc)) for doc in docs]
+    scanned_texts = [scanner.scan_text(macronizer.macronize_text(doc)) for doc in tqdm(docs, 'metric scansion', total=len(docs))]
     scanned_texts = [''.join(scanned_text) for scanned_text in scanned_texts]  # concatenate the sentences
     return scanned_texts
 
@@ -198,10 +202,11 @@ def _group_sentences(sentences, window_size):
 def data_for_kfold(dataset):
     authors = np.array(dataset.authors)
     titles = np.array(dataset.titles)
-    data = np.array([sub_list[i] for sub_list in dataset.data for i in range(1, len(sub_list))])
+    data = np.array([sub_list[i] for sub_list in dataset.data for i in range(1, len(sub_list))], dtype=object)
+    data_cltk = np.array([sub_list[i] for sub_list in dataset.data_cltk for i in range(1, len(sub_list))], dtype=object)
     authors_labels = np.array([sub_list[i] for sub_list in dataset.authors_labels for i in range(1, len(sub_list))])
     titles_labels = np.array([sub_list[i] for sub_list in dataset.titles_labels for i in range(1, len(sub_list))])
-    return authors, titles, data, authors_labels, titles_labels
+    return authors, titles, data, data_cltk, authors_labels, titles_labels
 
 
 # prepares dataset for loo (transform everything into numpy array)
@@ -209,8 +214,9 @@ def data_for_loo(dataset):
     authors = np.array(dataset.authors)
     titles = np.array(dataset.titles)
     data = np.array(list(itertools.chain.from_iterable(dataset.data)), dtype=object)
+    data_cltk = np.array(list(itertools.chain.from_iterable(dataset.data_cltk)), dtype=object)
     authors_labels = np.array(list(itertools.chain.from_iterable(dataset.authors_labels)))
     titles_labels = np.array(list(itertools.chain.from_iterable(dataset.titles_labels)))
-    return authors, titles, data, authors_labels, titles_labels
+    return authors, titles, data, data_cltk, authors_labels, titles_labels
 
 

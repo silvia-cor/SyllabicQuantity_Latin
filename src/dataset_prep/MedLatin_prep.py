@@ -1,7 +1,7 @@
 import re
 import os
 import numpy as np
-from general.helpers import splitter
+from general.helpers import splitter, metric_scansion
 
 
 class dataset_MedLatin:
@@ -27,6 +27,7 @@ class dataset_MedLatin:
         self.titles = os.listdir(dir_path)
         self.authors = np.unique([title.split('_', 1)[0] for title in self.titles]).tolist()
         self.data = []
+        self.data_cltk = []
         self.authors_labels = []
         self.titles_labels = []
         for i, file in enumerate(self.titles):
@@ -35,6 +36,7 @@ class dataset_MedLatin:
             author = self.authors.index(file.split('_', 1)[0])  # get author index by splitting the file name
             fragments = splitter(text, n_sent)
             self.data.append(fragments)
+            self.data_cltk.append(metric_scansion(fragments))
             # add corresponding title label, one for each fragment
             self.titles_labels.append([i] * len(fragments))
             if author is not None:

@@ -54,6 +54,7 @@ def _sentence_lengths_freq(documents, min=1, max=101):
     f = csr_matrix(features)
     return f
 
+
 # vectorize the documents with tfidf and select the best features
 def _vector_select(doc_train, doc_test, y_train, min, max, feature_selection_ratio):
     vectorizer = TfidfVectorizer(analyzer='char', ngram_range=(min, max), sublinear_tf=True)
@@ -68,7 +69,7 @@ def _vector_select(doc_train, doc_test, y_train, min, max, feature_selection_rat
 
 
 # vectorize the documents with tfidf (only for distortion methods)
-# parameters followinf Stamatatos_2018
+# parameters following Stamatatos_2018
 def _vector_dis(doc_train, doc_test):
     vectorizer = TfidfVectorizer(analyzer='char', ngram_range=(3, 3), min_df=5, sublinear_tf=True)
     f_train = vectorizer.fit_transform(doc_train)
@@ -79,7 +80,7 @@ def _vector_dis(doc_train, doc_test):
 # ------------------------------------------------------------------------
 # Feature Extractor
 # ------------------------------------------------------------------------
-def featuresExtractor(doc_train, doc_test, y_tr, lang='latin',
+def featuresExtractor(doc_train, doc_test, cltk_train, cltk_test, y_tr, lang='latin',
                       feature_selection_ratio=1,
                       function_words_freq=True,
                       word_lengths_freq=True,
@@ -97,7 +98,10 @@ def featuresExtractor(doc_train, doc_test, y_tr, lang='latin',
     Train and test are kept separate to properly fit on training set for n-grams vectorization and feature selection.
     :param doc_train: documents for training
     :param doc_test: documents for test
+    :param cltk_train: metric scansion for training
+    :param cltk_test: metric scansion for test
     :param y_tr: labels for training
+    :param lang: language to retrieve function words, default: latin
     :param feature_selection_ratio: if not 1, the specific percentage of features is selected through chi2;
                                     only for n-grams feature types (selection done separately).
     :param function_words_freq: not selected if None, otherwise it takes the language of interest
@@ -166,9 +170,7 @@ def featuresExtractor(doc_train, doc_test, y_tr, lang='latin',
         print(f'task DVL2 3-grams (#features={f_train.shape[1]}) [Done]')
 
     if SQ:
-        scanned_train = metric_scansion(doc_train)
-        scanned_test = metric_scansion(doc_test)
-        f_train, f_test = _vector_select(scanned_train, scanned_test, y_tr, SQ_ngrams[0], SQ_ngrams[1], feature_selection_ratio)
+        f_train, f_test = _vector_select(cltk_train, cltk_test, y_tr, SQ_ngrams[0], SQ_ngrams[1], feature_selection_ratio)
         X_tr = hstack((X_tr, csr_matrix(f_train)))
         X_te = hstack((X_te, csr_matrix(f_test)))
         print(f'task SQ n-grams (#features={f_train.shape[1]}) [Done]')

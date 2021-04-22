@@ -33,13 +33,13 @@ if __name__ == '__main__':
                        'DVEX': False,
                        'DVL2': False,
                        'SQ': True,
-                       'SQ_ngrams': [3, 3]}
-    # SVM_classification(dataset, features_params, kfold, svm_kfold_path)
+                       'SQ_ngrams': [3, 7]}
+    #SVM_classification(dataset, features_params, kfold, svm_kfold_path)
 
-    NN_params = {'DVMA': False,
+    NN_params = {'DVMA': True,
                  'DVSA': False,
                  'DVEX': False,
                  'DVL2': False,
                  'FAKE': False,
-                 'SQ': True}
+                 'SQ': False}
     NN_classification(dataset, NN_params, kfold, dataset_name, n_sent, nn_path)

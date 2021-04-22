@@ -5,29 +5,31 @@ import random
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
-from general.helpers import get_function_words, make_fake_vocab, fake_metric_scansion, metric_scansion, dis_DVMA, dis_DVEX, dis_DVSA, dis_DVL2
+from general.helpers import get_function_words, make_fake_vocab, fake_metric_scansion, metric_scansion, dis_DVMA, dis_DVEX, dis_DVSA, dis_DVL2, tokenize_nopunct
+import nltk
 
 # pytorch Dataset class (for DataLoader)
 class NN_BaseDataset(Dataset):
-    def __init__(self, x, y):
+    def __init__(self, x, x_cltk, y):
         self.x = x
+        self.x_cltk = x_cltk
         self.y = y
 
     def __len__(self):
         return len(self.y)
 
     def __getitem__(self, index):
-        return self.x[index], self.y[index]
+        return self.x[index], self.x_cltk[index], self.y[index]
 
 # main class: create and divides (train/test, batches) the dataset_prep
 class NN_DataLoader:
-    def __init__(self, x_trval, x_te, y_trval, y_te, NN_params, batch_size):
+    def __init__(self, x_trval, x_trval_cltk, x_te, x_te_cltk, y_trval, y_te, NN_params, batch_size):
         print('----- CREATING DATASET -----')
         self.function_words = get_function_words('latin') #for distortion techniques
         self.vocab_lens = {}
         self.NN_params = NN_params
         # divide the train+val so that the dataset is train/val/test
-        x_tr, x_val, y_tr, y_val = train_test_split(x_trval, y_trval, test_size=0.1, random_state=42, stratify=y_trval)
+        x_tr, x_val, x_tr_cltk, x_val_cltk, y_tr, y_val = train_test_split(x_trval, x_trval_cltk, y_trval, test_size=0.1, random_state=42, stratify=y_trval)
 
         print(f'#training samples = {len(y_tr)}')
         print(f'#validation samples = {len(y_val)}')
@@ -53,7 +55,7 @@ class NN_DataLoader:
             print(f'FAKE analyzer [Done]')
         if self.NN_params['SQ']:
             # sillabic quantities
-            x_dis = metric_scansion(x_tr)
+            x_dis = x_tr_cltk
             self.anal_SQ = self._make_analyzer(CountVectorizer(analyzer='char', ngram_range=(1, 1)), x_dis)
             self.vocab_lens['SQ'] = len(self.anal_SQ.vocabulary_)
             print(f'SQ analyzer [Done]')
@@ -83,23 +85,24 @@ class NN_DataLoader:
             print(f'DVL2 analyzer [Done]')
 
         # create the train/val/test generator (for batches)
-        train_dataset = NN_BaseDataset(x_tr, y_tr)
+        train_dataset = NN_BaseDataset(x_tr, x_tr_cltk, y_tr)
         self.train_generator = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
-        val_dataset = NN_BaseDataset(x_val, y_val)
+        val_dataset = NN_BaseDataset(x_val, x_val_cltk, y_val)
         self.val_generator = DataLoader(val_dataset, batch_size, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
-        test_dataset = NN_BaseDataset(x_te, y_te)
+        test_dataset = NN_BaseDataset(x_te, x_te_cltk, y_te)
         self.test_generator = DataLoader(test_dataset, batch_size, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
 
 
     def _collate_padding(self, batch):
         data = [item[0] for item in batch]
-        labels = [item[1] for item in batch]
+        data_cltk = [item[1] for item in batch]
+        labels = [item[2] for item in batch]
         encodings = {}
         if self.NN_params['FAKE']:
             dis_data = self._encode(fake_metric_scansion(data, self.fake_vocab), self.anal_FAKE)
             encodings['FAKE'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True, padding_value=self.anal_FAKE.vocabulary_['<pad>']).long()
         if self.NN_params['SQ']:
-            dis_data = self._encode(metric_scansion(data), self.anal_SQ)
+            dis_data = self._encode(data_cltk, self.anal_SQ)
             encodings['SQ'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True, padding_value=self.anal_SQ.vocabulary_['<pad>']).long()
         if self.NN_params['DVMA']:
             dis_data = self._encode(dis_DVMA(data, self.function_words), self.anal_DVMA)
@@ -114,7 +117,8 @@ class NN_DataLoader:
             dis_data = self._encode(dis_DVL2(data, self.function_words), self.anal_DVL2)
             encodings['DVL2'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True, padding_value=self.anal_DVL2.vocabulary_['<pad>']).long()
         targets = torch.Tensor(labels).long()
-        return encodings, targets
+        feats = _features(data, self.function_words)
+        return encodings, targets, feats
 
     # set the seed for the DataLoader worder
     def _seed_worker(self, worker_id):
@@ -139,3 +143,29 @@ class NN_DataLoader:
         return encoded_texts
 
 
+def _features(documents, function_words, upto=26, min=1, max=101):
+    features_all = []
+    for text in documents:
+        feats = []
+        mod_tokens = tokenize_nopunct(text)
+        freqs = nltk.FreqDist(mod_tokens)
+        nwords = len(mod_tokens)
+        funct_words_freq = [freqs[function_word] / nwords for function_word in function_words]
+        feats.extend(funct_words_freq)
+        tokens_len = [len(token) for token in mod_tokens]
+        tokens_count = []
+        for i in range(1, upto):
+            tokens_count.append((sum(j >= i for j in tokens_len)) / nwords)
+        feats.extend(tokens_count)
+        sentences = [t.strip() for t in nltk.tokenize.sent_tokenize(text) if t.strip()]
+        nsent = len(sentences)
+        sent_len = []
+        sent_count = []
+        for sentence in sentences:
+            mod_tokens = tokenize_nopunct(sentence)
+            sent_len.append(len(mod_tokens))
+        for i in range(min, max):
+            sent_count.append((sum(j >= i for j in sent_len)) / nsent)
+        feats.extend(sent_count)
+        features_all.append(feats)
+    return torch.Tensor(features_all)
