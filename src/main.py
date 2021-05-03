@@ -1,7 +1,7 @@
 from sklearn.model_selection import StratifiedKFold, LeaveOneGroupOut, train_test_split
 from general.utils import pickled_resource
 from SVM_classification import SVM_classification
-from NN_classification import NN_classification
+from NN_classification_attn import NN_classification
 from dataset_prep.LatinitasAntiqua_prep import dataset_LatinitasAntiqua
 from dataset_prep.KabalaCorpusA_prep import dataset_KabalaCorpusA
 from dataset_prep.MedLatin_prep import dataset_MedLatin
@@ -36,10 +36,10 @@ if __name__ == '__main__':
                        'SQ_ngrams': [3, 7]}
     #SVM_classification(dataset, features_params, kfold, svm_kfold_path)
 
-    NN_params = {'DVMA': True,
-                 'DVSA': False,
+    NN_params = {'DVMA': False,
+                 'DVSA': True,
                  'DVEX': False,
                  'DVL2': False,
                  'FAKE': False,
                  'SQ': False}
-    NN_classification(dataset, NN_params, kfold, dataset_name, n_sent, nn_path)
+    NN_classification(dataset, NN_params, dataset_name, n_sent, nn_path)
