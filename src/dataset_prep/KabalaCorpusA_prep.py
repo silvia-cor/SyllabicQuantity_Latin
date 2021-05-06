@@ -1,6 +1,7 @@
 import re
 import os
 import numpy as np
+import pathlib
 from general.helpers import splitter, metric_scansion
 
 

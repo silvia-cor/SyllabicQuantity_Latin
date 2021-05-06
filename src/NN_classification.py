@@ -229,9 +229,11 @@ def NN_classification(dataset, NN_params, dataset_name, n_sent, pickle_path):
     else:
         print(f'----- NN EXPERIMENT {method_name} -----')
         authors, titles, data, data_cltk, authors_labels, titles_labels = data_for_kfold(dataset)
-        dataset = NN_DataLoader(data, data_cltk, authors_labels, NN_params, batch_size=100)
+        dataset = NN_DataLoader(data, data_cltk, authors_labels, NN_params, batch_size=64)
         #model = Penta_NN(NN_params, dataset.vocab_lens, len(authors), 205).to(device)
         model = Penta_NN(NN_params, dataset.vocab_lens, len(authors), start_dim_dense=0).to(device)
+        print('Total paramaters:', sum(p.numel() for p in model.parameters() if p.requires_grad))
+        print('Device:', device)
         val_f1s = _train(model, NN_params, dataset.train_generator, dataset.val_generator, f'../NN_methods/{dataset_name}/{method_name}.pt',
                             n_epochs=500, patience=15)
         y_preds, y_te = _test(model, NN_params, dataset.test_generator, f'../NN_methods/{dataset_name}/{method_name}.pt')

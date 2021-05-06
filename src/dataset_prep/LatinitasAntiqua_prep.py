@@ -34,6 +34,7 @@ class dataset_LatinitasAntiqua:
         :param n_sent: number of sentences forming a fragment, default: 10
         """
 
+        # make directory 'dataset' if not existing
         os.makedirs(pathlib.Path(dir_path).parent, exist_ok=True)
 
         #if the directory doesn't exist, download and clean the texts
