@@ -7,9 +7,10 @@ class Penta_Attn(nn.Module):
     def __init__(self, NN_params, vocab_lens, n_labels, start_dim_dense, device):
         super().__init__()
         dim_dense = start_dim_dense
-        self.emb_len = 32
-        self.n_heads = 2
-        self.cnn_size = 100
+        self.emb_len = 16
+        self.n_heads = 1
+        self.num_layers = 2
+        self.cnn_size = 50
         self.device = device
         if NN_params['FAKE']:
             self.embed_FAKE, self.attn_FAKE, self.cnn_FAKE = self.make_layers(vocab_lens['FAKE'])
@@ -31,7 +32,6 @@ class Penta_Attn(nn.Module):
             dim_dense += self.cnn_size
         self.flat = nn.Flatten()
         self.drop = nn.Dropout(0.5)
-        self.maxpool = nn.MaxPool1d(3)
         self.dense1 = nn.Linear(dim_dense, n_labels)
 
     def forward(self, NN_params, encodings): #, feats):
@@ -49,7 +49,7 @@ class Penta_Attn(nn.Module):
         if NN_params['DVL2']:
             outputs.append(self.sub_forward(encodings['DVL2'], self.embed_DVL2, self.attn_DVL2, self.cnn_DVL2))
         x = torch.cat(outputs, 1)
-        #x = torch.cat((x, feats), 1)
+        # x = torch.cat((x, feats), 1)
         x = self.drop(x)
         x = self.dense1(F.relu(x))
         # x = self.drop(x)
@@ -74,8 +74,8 @@ class Penta_Attn(nn.Module):
     def make_layers(self, vocab_len):
         embed = nn.Embedding(vocab_len, self.emb_len)
         attn = nn.TransformerEncoderLayer(d_model=self.emb_len, nhead=self.n_heads)  # attention through an encoder
-        attn = nn.TransformerEncoder(attn, num_layers=2) # for stacked encoders
-        cnn = nn.Conv1d(in_channels=self.emb_length, out_channels=self.cnn_size, kernel_size=3)
+        attn = nn.TransformerEncoder(attn, num_layers=self.num_layers)  # for stacked encoders
+        cnn = nn.Conv1d(in_channels=self.emb_len, out_channels=self.cnn_size, kernel_size=3)
         return embed, attn, cnn
 
     def sub_forward(self, encoding, embed_layer, attn_layer, conv_layer):
@@ -86,7 +86,6 @@ class Penta_Attn(nn.Module):
         x = x.transpose(1, 2).contiguous()  # (N , E, L)
         x = conv_layer(x)  # (N, Cout, L)
         x = F.relu(x)  # (N, Cout, L)
-        x = self.maxpool(x)
         L = x.size()[2]
         x = F.max_pool1d(x, L)  # (N, Cout, 1)
         x = x.squeeze(2)  # (N, Cout)

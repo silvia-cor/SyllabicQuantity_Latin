@@ -12,9 +12,11 @@ from pathlib import Path
 from general.helpers import data_for_kfold
 from general.significance import significance_test
 from dataset_prep.NN_dataloader import NN_DataLoader
-from NN_models.NN_3cnn import Penta_3cnn
+from NN_models.NN_cnn_cat import Penta_Cat
 from NN_models.NN_attn import Penta_Attn
-from NN_models.NN_ensemble import Penta_Ensemble
+from NN_models.NN_cnn_shallow_ensemble import Penta_ShallowEnsemble
+from NN_models.NN_cnn_deep_ensemble import Penta_DeepEnsemble
+from NN_models.NN_lstm import Penta_Lstm
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # for reproducibility
@@ -25,9 +27,9 @@ torch.cuda.manual_seed(42)
 np.random.seed(42)
 
 
-def NN_classification(dataset, NN_params, model_name, dataset_name, n_sent, pickle_path):
+def NN_classification(dataset, NN_params, model_name, dataset_name, n_sent, pickle_path, batch_size=64):
     os.makedirs(f'../NN_methods/{n_sent}sent', exist_ok=True)
-    available_models = ['single_cnn', '3cnn', 'attn', 'ensemble']
+    available_models = ['cnn_cat', 'attn', 'cnn_deep_ensemble', 'cnn_shallow_ensemble', 'lstm']
     assert not (NN_params['FAKE'] and NN_params['SQ']), 'Can have FAKE or SQ channel, but not both'
     assert model_name in available_models, f'Model not implemented, available models: {available_models}'
     if os.path.exists(pickle_path):
@@ -41,20 +43,24 @@ def NN_classification(dataset, NN_params, model_name, dataset_name, n_sent, pick
     else:
         print(f'----- NN EXPERIMENT {method_name} for model {model_name} -----')
         authors, titles, data, data_cltk, authors_labels, titles_labels = data_for_kfold(dataset)
-        dataset = NN_DataLoader(data, data_cltk, authors_labels, NN_params, batch_size=64)
-        #model = Penta_NN(NN_params, dataset.vocab_lens, len(authors), 205).to(device)
-        if model_name == '3cnn':
-            model = Penta_3cnn(NN_params, dataset.vocab_lens, len(authors), start_dim_dense=0, device=device).to(device)
+        dataset = NN_DataLoader(data, data_cltk, authors_labels, NN_params, batch_size=batch_size)
+        # model = Penta_NN(NN_params, dataset.vocab_lens, len(authors), 205).to(device)
+        if model_name == 'cnn_cat':
+            model = Penta_Cat(NN_params, dataset.vocab_lens, len(authors), start_dim_dense=205, device=device).to(device)
         elif model_name == 'attn':
             model = Penta_Attn(NN_params, dataset.vocab_lens, len(authors), start_dim_dense=0, device=device).to(device)
-        elif model_name == 'ensemble':
-            model = Penta_Ensemble(NN_params, dataset.vocab_lens, len(authors), start_dim_dense=0, device=device).to(device)
+        elif model_name == 'cnn_deep_ensemble':
+            model = Penta_DeepEnsemble(NN_params, dataset.vocab_lens, len(authors), device=device).to(device)
+        elif model_name == 'cnn_shallow_ensemble':
+            model = Penta_ShallowEnsemble(NN_params, dataset.vocab_lens, len(authors), device=device).to(device)
+        elif model_name == 'lstm':
+            model = Penta_Lstm(NN_params, dataset.vocab_lens, len(authors), start_dim_dense=0, device=device).to(device)
         else:
             model = None
         print('Total paramaters:', sum(p.numel() for p in model.parameters() if p.requires_grad))
         print('Device:', device)
         val_f1s = _train(model, NN_params, dataset.train_generator, dataset.val_generator, f'../NN_methods/{dataset_name}/{method_name}.pt',
-                            n_epochs=500, patience=15)
+                            n_epochs=5000, patience=100)
         y_preds, y_te = _test(model, NN_params, dataset.test_generator, f'../NN_methods/{dataset_name}/{method_name}.pt')
         if 'True' not in df:
             df['True'] = {}
@@ -128,12 +134,12 @@ def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs
             model.train()
             all_preds = []
             all_labels = []
-            for encodings, targets in train: #, feats in train:
+            for encodings, targets, feats in train:
                 optimizer.zero_grad()
                 targets = targets.to(device)
-                #feats = feats.to(device)
-                #preds = model(NN_params, encodings, feats)
-                preds = model(NN_params, encodings)
+                feats = feats.to(device)
+                preds = model(NN_params, encodings, feats)
+                # preds = model(NN_params, encodings)
                 loss = criterion(preds, targets)
                 loss.backward()
                 optimizer.step()
@@ -144,20 +150,19 @@ def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs
                 tr_f1score = f1_score(all_labels, all_preds, average='macro')
                 train.set_description(f'Epoch {epoch+1} loss={np.mean(epoch_loss):.5f} tr-macro-F1={tr_f1score:.3f}')
 
-        #evaluation
+        # evaluation
         model.eval()
         with torch.no_grad():
             all_preds = []
             all_labels = []
-            for encodings, targets in val_generator: #, feats in val_generator:
-                #feats = feats.to(device)
-                #preds = model(NN_params, encodings, feats)
-                preds = model(NN_params, encodings)
+            for encodings, targets, feats in val_generator:
+                feats = feats.to(device)
+                preds = model(NN_params, encodings, feats)
+                # preds = model(NN_params, encodings)
                 preds = torch.argmax(preds, dim=1)
                 all_preds.extend(preds.detach().clone().cpu().numpy())
                 all_labels.extend(targets.numpy())
             val_f1score = f1_score(all_labels, all_preds, average='macro')
-            print(f'Val_F1-max: {val_f1max:.3f} Val_F1: {val_f1score:.3f}')
             # for the first 50 epochs, it simply trains
             # afterwards, if after patience there is no improvement, early stop happens
             if epoch == 49:
@@ -169,18 +174,19 @@ def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs
             else:
                 epochs_no_improv += 1
             val_f1scores.append(val_f1score)
+            print(f'Val_F1-max: {val_f1max:.3f} Val_F1: {val_f1score:.3f}')
             if epochs_no_improv == patience and epoch > 49:
                 print("Early stopping!")
                 break
 
     model.load_state_dict(torch.load(save_path))
     model.train()
-    for encodings, targets in val_generator: #, feats in val_generator:
+    for encodings, targets, feats in val_generator:
         optimizer.zero_grad()
         targets = targets.to(device)
-        #feats = feats.to(device)
-        #preds = model(NN_params, encodings, feats)
-        preds = model(NN_params, encodings)
+        feats = feats.to(device)
+        preds = model(NN_params, encodings, feats)
+        # preds = model(NN_params, encodings)
         loss = criterion(preds, targets)
         loss.backward()
         optimizer.step()
@@ -194,10 +200,10 @@ def _test(model, NN_params, test_generator, load_path):
     with torch.no_grad():
         all_preds = []
         all_labels = []
-        for encodings, targets in test_generator: #, feats in test_generator:
-            #feats = feats.to(device)
-            #preds = model(NN_params, encodings, feats)
-            preds = model(NN_params, encodings)
+        for encodings, targets, feats in test_generator:
+            feats = feats.to(device)
+            preds = model(NN_params, encodings, feats)
+            # preds = model(NN_params, encodings)
             preds = torch.argmax(preds, dim=1)
             all_preds.extend(preds.detach().clone().cpu().numpy())
             all_labels.extend(targets.numpy())

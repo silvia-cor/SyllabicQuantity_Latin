@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 
-#function to make a scatter plot of macro/micro F1 for kfold and loo experiments
+
+# function to make a scatter plot of macro/micro F1 for kfold and loo experiments
 def f1_scatterplot(exp_path):
     try:
         with open(exp_path, 'rb') as handle:

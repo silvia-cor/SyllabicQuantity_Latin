@@ -22,6 +22,7 @@ def _function_words_freq(documents, function_words):
     f = csr_matrix(features)
     return f
 
+
 # extract the frequencies (L1x1000) of the words' lengths used in the documents,
 # following the idea behind Mendenhall's Characteristic Curve of Composition
 def _word_lengths_freq(documents, upto=26):
@@ -36,6 +37,7 @@ def _word_lengths_freq(documents, upto=26):
         features.append(tokens_count)
     f = csr_matrix(features)
     return f
+
 
 # extract lengths of the sentences, ie. number of words in the sentence
 def _sentence_lengths_freq(documents, min=1, max=101):

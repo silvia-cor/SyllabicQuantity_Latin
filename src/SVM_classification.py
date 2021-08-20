@@ -1,7 +1,7 @@
 from sklearn.model_selection import StratifiedKFold, LeaveOneGroupOut
 from sklearn.svm import LinearSVC
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import f1_score, make_scorer
+from sklearn.metrics import f1_score, make_scorer, accuracy_score
 import sys
 import pickle
 import numpy as np
@@ -52,6 +52,7 @@ def SVM_classification(dataset, features_params, cv_method, pickle_path):
     print('Tot. features (mean):', int(np.round(np.mean(df[method_name]['tot_features']))))
     print(f'Macro-F1: {df[method_name]["macroF1"]:.3f}')
     print(f'Micro-F1: {df[method_name]["microF1"] :.3f}')
+    print(f'Accuracy: {accuracy_score(df["True"]["labels"], df[method_name]["preds"]) :.3f}')  # added to check accuracy
     with open(pickle_path, 'wb') as handle:
         pickle.dump(df, handle)
 
@@ -87,8 +88,8 @@ def _create_method_name(features_params):
     return method_name
 
 
-#perform kfold cross-validation using a LinearSVM
-#training and testing only on fragments
+# perform kfold cross-validation using a LinearSVM
+# training and testing only on fragments
 def _kfold_crossval(dataset, features_params, kfold):
     authors, titles, data, data_cltk, authors_labels, titles_labels = data_for_kfold(dataset)
     print('Tot. fragments:', len(data))

@@ -23,6 +23,7 @@ class NN_BaseDataset(Dataset):
     def __getitem__(self, index):
         return self.x[index], self.x_cltk[index], self.y[index]
 
+
 # main class: create and divides (train/test, batches) the dataset_prep
 class NN_DataLoader:
     def __init__(self, data, data_cltk, authors_labels, NN_params, batch_size):
@@ -40,8 +41,8 @@ class NN_DataLoader:
         print(f'#test samples = {len(y_te)}')
 
         # sort the sets by lengths (for padding)
-        #self.x_tr, self.y_tr = self._sort_docs(x_tr, y_tr)
-        #self.x_te, self.y_te = self._sort_docs(x_te, y_te)
+        # self.x_tr, self.y_tr = self._sort_docs(x_tr, y_tr)
+        # self.x_te, self.y_te = self._sort_docs(x_te, y_te)
 
         # create the analyzer for each encoding: a CountVectorizer based on training samples
         print('----- CREATING ANALYZERS -----')
@@ -66,7 +67,7 @@ class NN_DataLoader:
         if self.NN_params['DVMA']:
             # DVMA distortion
             x_dis = dis_DVMA(x_tr, self.function_words)
-            self.anal_DVMA = self._make_analyzer(CountVectorizer(analyzer='char', ngram_range=(1,1)), x_dis)
+            self.anal_DVMA = self._make_analyzer(CountVectorizer(analyzer='char', ngram_range=(1, 1)), x_dis)
             self.vocab_lens['DVMA'] = len(self.anal_DVMA.vocabulary_)
             print(f'DVMA analyzer [Done]')
         if self.NN_params['DVSA']:
@@ -96,7 +97,6 @@ class NN_DataLoader:
         test_dataset = NN_BaseDataset(x_te, x_te_cltk, y_te)
         self.test_generator = DataLoader(test_dataset, batch_size, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
 
-
     def _collate_padding(self, batch):
         data = [item[0] for item in batch]
         data_cltk = [item[1] for item in batch]
@@ -121,10 +121,10 @@ class NN_DataLoader:
             dis_data = self._encode(dis_DVL2(data, self.function_words), self.anal_DVL2)
             encodings['DVL2'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True, padding_value=self.anal_DVL2.vocabulary_['<pad>']).long()
         targets = torch.Tensor(labels).long()
-        #feats = _features(data, self.function_words)
-        return encodings, targets  #, feats
+        feats = _features(data, self.function_words)
+        return encodings, targets, feats
 
-    # set the seed for the DataLoader worder
+    # set the seed for the DataLoader worker
     def _seed_worker(self, worker_id):
         worker_seed = torch.initial_seed() % 2 ** 32
         np.random.seed(worker_seed)
@@ -147,29 +147,29 @@ class NN_DataLoader:
         return encoded_texts
 
 
-# def _features(documents, function_words, upto=26, min=1, max=101):
-#     features_all = []
-#     for text in documents:
-#         feats = []
-#         mod_tokens = tokenize_nopunct(text)
-#         freqs = nltk.FreqDist(mod_tokens)
-#         nwords = len(mod_tokens)
-#         funct_words_freq = [freqs[function_word] / nwords for function_word in function_words]
-#         feats.extend(funct_words_freq)
-#         tokens_len = [len(token) for token in mod_tokens]
-#         tokens_count = []
-#         for i in range(1, upto):
-#             tokens_count.append((sum(j >= i for j in tokens_len)) / nwords)
-#         feats.extend(tokens_count)
-#         sentences = [t.strip() for t in nltk.tokenize.sent_tokenize(text) if t.strip()]
-#         nsent = len(sentences)
-#         sent_len = []
-#         sent_count = []
-#         for sentence in sentences:
-#             mod_tokens = tokenize_nopunct(sentence)
-#             sent_len.append(len(mod_tokens))
-#         for i in range(min, max):
-#             sent_count.append((sum(j >= i for j in sent_len)) / nsent)
-#         feats.extend(sent_count)
-#         features_all.append(feats)
-#     return torch.Tensor(normalize(features_all))
+def _features(documents, function_words, upto=26, min=1, max=101):
+    features_all = []
+    for text in documents:
+        feats = []
+        mod_tokens = tokenize_nopunct(text)
+        freqs = nltk.FreqDist(mod_tokens)
+        nwords = len(mod_tokens)
+        funct_words_freq = [freqs[function_word] / nwords for function_word in function_words]
+        feats.extend(funct_words_freq)
+        tokens_len = [len(token) for token in mod_tokens]
+        tokens_count = []
+        for i in range(1, upto):
+            tokens_count.append((sum(j >= i for j in tokens_len)) / nwords)
+        feats.extend(tokens_count)
+        sentences = [t.strip() for t in nltk.tokenize.sent_tokenize(text) if t.strip()]
+        nsent = len(sentences)
+        sent_len = []
+        sent_count = []
+        for sentence in sentences:
+            mod_tokens = tokenize_nopunct(sentence)
+            sent_len.append(len(mod_tokens))
+        for i in range(min, max):
+            sent_count.append((sum(j >= i for j in sent_len)) / nsent)
+        feats.extend(sent_count)
+        features_all.append(feats)
+    return torch.Tensor(normalize(features_all))

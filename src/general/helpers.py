@@ -43,7 +43,6 @@ def tokenize_nopunct(text):
 # ------------------------------------------------------------------------
 
 # transform values in dictionary into fake SQ sequences
-# TODO: x same probability? It's the end of the sentence...
 def make_fake_vocab(analyzer):
     for vocab in analyzer.vocabulary_:
         n = len(vocab) // 3 if len(vocab) // 3 > 1 else 1
@@ -159,7 +158,7 @@ def dis_DVL2(docs, function_words):
 # also adds the entire text in the first index
 def splitter(text, n_sentences):
     text_fragments = []
-    text_fragments.append(text) #add whole text
+    text_fragments.append(text)  # add whole text
     sentences = _split_sentences(text)
     text_fragments.extend(_group_sentences(sentences, n_sentences))
     return text_fragments
@@ -195,7 +194,6 @@ def _group_sentences(sentences, window_size):
 # ------------------------------------------------------------------------
 # functions to prepare the dataset for k-fold or loo cross-validation
 # ------------------------------------------------------------------------
-
 
 # prepares dataset for k-fold-cross-validation
 # takes out first element in data and labels (which is the whole text) and transform in numpy array
