@@ -3,7 +3,8 @@ from sklearn.feature_selection import SelectKBest, chi2
 import nltk
 from scipy.sparse import hstack, csr_matrix
 from sklearn.preprocessing import normalize
-from general.helpers import get_function_words, tokenize_nopunct, metric_scansion, dis_DVMA, dis_DVSA, dis_DVEX, dis_DVL2
+from general.helpers import get_function_words, tokenize_nopunct, metric_scansion, dis_DVMA, dis_DVSA, dis_DVEX, \
+    dis_DVL2
 
 
 # ------------------------------------------------------------------------
@@ -58,12 +59,12 @@ def _sentence_lengths_freq(documents, min=1, max=101):
 
 
 # vectorize the documents with tfidf and select the best features
-def _vector_select(doc_train, doc_test, y_train, min, max, feature_selection_ratio):
+def _vector_select(doc_train, doc_test, y_train, min, max, SQ_selection_ratio):
     vectorizer = TfidfVectorizer(analyzer='char', ngram_range=(min, max), sublinear_tf=True)
     f_train = vectorizer.fit_transform(doc_train)
     f_test = vectorizer.transform(doc_test)
-    if feature_selection_ratio != 1:
-        num_feats = int(f_train.shape[1] * feature_selection_ratio)  # number of selected features (must be int)
+    if SQ_selection_ratio != 1:
+        num_feats = int(f_train.shape[1] * SQ_selection_ratio)  # number of selected features (must be int)
         selector = SelectKBest(chi2, k=num_feats)
         f_train = selector.fit_transform(f_train, y_train)
         f_test = selector.transform(f_test)
@@ -83,7 +84,7 @@ def _vector_dis(doc_train, doc_test):
 # Feature Extractor
 # ------------------------------------------------------------------------
 def featuresExtractor(doc_train, doc_test, cltk_train, cltk_test, y_tr, lang='latin',
-                      feature_selection_ratio=1,
+                      SQ_selection_ratio=1,
                       function_words_freq=True,
                       word_lengths_freq=True,
                       sentence_lengths_freq=True,
@@ -92,24 +93,24 @@ def featuresExtractor(doc_train, doc_test, cltk_train, cltk_test, y_tr, lang='la
                       DVEX=False,
                       DVL2=False,
                       SQ=False,
-                      SQ_ngrams = [3,3]):
+                      SQ_ngrams=[3, 3]):
     """
-    For each feature type, the corresponding function is called and a csr_matrix is created.
-    The matrix is normalized through l2.
-    The matrix is then added orizontally (hstack) to the final matrix.
-    Train and test are kept separate to properly fit on training set for n-grams vectorization and feature selection.
-    :param doc_train: documents for training
-    :param doc_test: documents for test
-    :param cltk_train: metric scansion for training
-    :param cltk_test: metric scansion for test
-    :param y_tr: labels for training
-    :param lang: language to retrieve function words, default: latin
-    :param feature_selection_ratio: if not 1, the specific percentage of features is selected through chi2;
+        For each feature type, the corresponding function is called and a csr_matrix is created.
+        The matrix is normalized through l2.
+        The matrix is then added orizontally (hstack) to the final matrix.
+        Train and test are kept separate to properly fit on training set for n-grams vectorization and feature selection.
+        :param doc_train: documents for training
+        :param doc_test: documents for test
+        :param cltk_train: metric scansion for training
+        :param cltk_test: metric scansion for test
+        :param y_tr: labels for training
+        :param lang: language to retrieve function words, default: latin
+        :param feature_selection_ratio: if not 1, the specific percentage of features is selected through chi2;
                                     only for n-grams feature types (selection done separately).
-    :param function_words_freq: not selected if None, otherwise it takes the language of interest
-    :param DVMA/DVSA/DVEX/DVL2: not selected if None, otherwise it takes the language of interest (for function words)
-    :param SQ: not selected if None, otherwise it takes the range (for n-grams)
-    """
+        :param function_words_freq: not selected if None, otherwise it takes the language of interest
+        :param DVMA/DVSA/DVEX/DVL2: not selected if None, otherwise it takes the language of interest (for function words)
+        :param SQ: not selected if None, otherwise it takes the range (for n-grams)
+        """
 
     # final matrixes of features
     # initialize the right number of rows, or hstack won't work
@@ -140,7 +141,7 @@ def featuresExtractor(doc_train, doc_test, cltk_train, cltk_test, y_tr, lang='la
         print(f'task sentence lengths (#features={f.shape[1]}) [Done]')
 
     if DVMA:
-        dis_train = dis_DVMA(doc_train,fw)
+        dis_train = dis_DVMA(doc_train, fw)
         dis_test = dis_DVMA(doc_test, fw)
         f_train, f_test = _vector_dis(dis_train, dis_test)
         X_tr = hstack((X_tr, csr_matrix(f_train)))
@@ -172,7 +173,7 @@ def featuresExtractor(doc_train, doc_test, cltk_train, cltk_test, y_tr, lang='la
         print(f'task DVL2 3-grams (#features={f_train.shape[1]}) [Done]')
 
     if SQ:
-        f_train, f_test = _vector_select(cltk_train, cltk_test, y_tr, SQ_ngrams[0], SQ_ngrams[1], feature_selection_ratio)
+        f_train, f_test = _vector_select(cltk_train, cltk_test, y_tr, SQ_ngrams[0], SQ_ngrams[1], SQ_selection_ratio)
         X_tr = hstack((X_tr, csr_matrix(f_train)))
         X_te = hstack((X_te, csr_matrix(f_test)))
         print(f'task SQ n-grams (#features={f_train.shape[1]}) [Done]')

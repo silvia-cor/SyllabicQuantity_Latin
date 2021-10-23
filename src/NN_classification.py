@@ -77,12 +77,16 @@ def NN_classification(dataset, NN_params, model_name, dataset_name, n_sent, pick
     print(f'Micro-F1: {df[method_name]["microF1"] :.3f}')
     with open(pickle_path, 'wb') as handle:
         pickle.dump(df, handle)
-
     # significance test if SQ are in the features with another method
     # significance test is against the same method without SQ
     if ' + SQ' in method_name or ' + FAKE' in method_name:
         baseline = method_name.split(' + ')[0]
         if baseline in df:
+            print(f'COMPARISON WITH BASELINE {baseline}')
+            delta_macro = (df[method_name]['macroF1'] - df[baseline]['macroF1']) / df[baseline]['macroF1'] * 100
+            delta_micro = (df[method_name]['microF1'] - df[baseline]['microF1']) / df[baseline]['microF1'] * 100
+            print(f'Macro-F1 Delta %: {delta_macro:.2f}')
+            print(f'Micro-F1 Delta %: {delta_micro:.2f}')
             significance_test(df['True']['labels'], df[baseline]['preds'], df[method_name]['preds'], baseline)
         else:
             print(f'No {baseline} saved, significance test cannot be performed :/')
@@ -94,21 +98,20 @@ def NN_classification(dataset, NN_params, model_name, dataset_name, n_sent, pick
 def _create_method_name(NN_params):
     methods = []
     dv_methods = ['DVMA', 'DVSA', 'DVEX', 'DVL2']
+    method_name = 'BaseFeatures'
     for method in dv_methods:
         if NN_params[method]:
             methods.append(method)
     if len(methods) == 4:
-        method_name = 'ALLDV'
-    else:
-        method_name = ' + '.join(methods)
+        method_name += '+ ALLDV'
+    elif len(methods) > 0:
+        if method_name != '':
+            method_name += ' + '
+        method_name += ' + '.join(methods)
     if NN_params['SQ']:
-        if method_name != '':
-            method_name += ' + '
-        method_name += 'SQ'
+        method_name += ' + SQ'
     if NN_params['FAKE']:
-        if method_name != '':
-            method_name += ' + '
-        method_name += 'FAKE'
+        method_name += ' + FAKE'
     return method_name
 
 
