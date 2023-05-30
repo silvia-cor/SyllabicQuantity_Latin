@@ -4,9 +4,9 @@ import torch.nn.functional as F
 
 
 class Penta_Cat(nn.Module):
-    def __init__(self, NN_params, vocab_lens, n_labels, start_dim_dense, device, kernel_sizes=[3]):
+    def __init__(self, NN_params, vocab_lens, n_labels, feat_dim, device, kernel_sizes=[3]):
         super().__init__()
-        dim_dense = start_dim_dense
+        dim_dense = feat_dim
         self.emb_len = 32
         self.cnn_out_size = 100
         self.device = device

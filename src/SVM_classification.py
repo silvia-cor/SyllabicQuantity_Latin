@@ -1,7 +1,7 @@
-from sklearn.model_selection import StratifiedKFold, LeaveOneGroupOut, train_test_split, PredefinedSplit
+from sklearn.model_selection import StratifiedKFold, LeaveOneGroupOut, train_test_split
 from sklearn.svm import LinearSVC
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import f1_score, make_scorer, accuracy_score
+from sklearn.metrics import f1_score, make_scorer
 import sys
 import pickle
 import numpy as np
@@ -24,9 +24,6 @@ if not sys.warnoptions:
 
 
 def SVM_classification(dataset, features_params, pickle_path, cv_method='1fold'):
-    assert cv_method in ['TrValTe', 'kfold', 'loo'], 'CV method must be either TrValTe, kfold or loo'
-    assert features_params[
-               'SQ_selection_ratio'] != 0 or cv_method == 'TrValTe', 'SQ selection optimization only for TrValTe method'
     if os.path.exists(pickle_path):
         with open(pickle_path, 'rb') as handle:
             df = pickle.load(handle)
@@ -42,7 +39,7 @@ def SVM_classification(dataset, features_params, pickle_path, cv_method='1fold')
         elif cv_method == 'loo':
             y_all_pred, y_all_te, best_Cs, tot_features = _loo_crossval(dataset, features_params)
         else:
-            y_all_pred, y_all_te, best_Cs, tot_features = _TrValTe_crossval(dataset, features_params)
+            y_all_pred, y_all_te, best_Cs, tot_features = _1fold_crossval(dataset, features_params)
         if 'True' not in df:
             df['True'] = {}
             df['True']['labels'] = y_all_te
@@ -83,7 +80,7 @@ def _create_method_name(features_params):
     dv_methods = ['DVMA', 'DVSA', 'DVEX', 'DVL2']
     method_name = ''
     if features_params['function_words_freq'] and features_params['word_lengths_freq'] and features_params[
-        'sentence_lengths_freq']:
+        'sentence_lengths_freq'] and features_params['pos']:
         method_name += 'BaseFeatures'
     for method in dv_methods:
         if features_params[method]:
@@ -114,7 +111,7 @@ def _create_method_name(features_params):
 # training and testing only on fragments
 # optimization done only for SVM parameter C via GridSearch
 def _kfold_crossval(dataset, features_params):
-    authors, titles, data, data_cltk, authors_labels, titles_labels = data_for_kfold(dataset)
+    authors, titles, data, data_cltk, data_pos, authors_labels, titles_labels = data_for_kfold(dataset)
     print('Tot. fragments:', len(data))
     y_all_pred = []
     y_all_te = []
@@ -125,12 +122,14 @@ def _kfold_crossval(dataset, features_params):
         print(f'----- K-FOLD EXPERIMENT {i + 1} -----')
         x_tr = data[train_index]
         x_tr_cltk = data_cltk[train_index]
+        x_tr_pos = data_pos[train_index]
         x_te = data[test_index]
         x_te_cltk = data_cltk[test_index]
+        x_te_pos = data_pos[test_index]
         y_tr = authors_labels[train_index]
         y_te = authors_labels[test_index]
         print('FEATURE EXTRACTION')
-        X_tr, X_te = featuresExtractor(x_tr, x_te, x_tr_cltk, x_te_cltk, y_tr, **features_params)
+        X_tr, X_te = featuresExtractor(x_tr, x_te, x_tr_cltk, x_te_cltk, x_tr_pos, x_te_pos, y_tr, **features_params)
         print("Training shape: ", X_tr.shape)
         print("Test shape: ", X_te.shape)
         tot_features.append(X_tr.shape[1])
@@ -156,7 +155,7 @@ def __single_TrVal_exp(configuration):
     dataset = configuration[2]
     cls = LinearSVC(class_weight='balanced', random_state=42, C=C)
     X_tr, X_val = featuresExtractor(dataset['x_tr'], dataset['x_val'], dataset['x_tr_cltk'], dataset['x_val_cltk'],
-                                    dataset['y_tr'], **feat_params)
+                                    dataset['x_tr_pos'], dataset['x_val_pos'], dataset['y_tr'], **feat_params)
     cls.fit(X_tr, dataset['y_tr'])
     y_pred = cls.predict(X_val)
     f1 = f1_score(dataset['y_val'], y_pred, average='macro')
@@ -166,17 +165,23 @@ def __single_TrVal_exp(configuration):
 # perform train-val-test validation using a LinearSVM
 # training and testing only on fragments
 # optimization of SVM parameter C (and SQ_selection_ratio if required) via GridSearch from scratch
-def _TrValTe_crossval(dataset, features_params):
-    authors, titles, data, data_cltk, authors_labels, titles_labels = data_for_kfold(dataset)
+def _1fold_crossval(dataset, features_params):
+    authors, titles, data, data_cltk, data_pos, authors_labels, titles_labels = data_for_kfold(dataset)
     # divide the dataset into train+val and test
-    x_trval, x_te, x_trval_cltk, x_te_cltk, y_trval, y_te = train_test_split(data, data_cltk, authors_labels,
-                                                                             test_size=0.1, random_state=42,
-                                                                             stratify=authors_labels)
+    x_trval, x_te, x_trval_cltk, x_te_cltk, x_trval_pos, x_te_pos, y_trval, y_te = train_test_split(data, data_cltk,
+                                                                                                    data_pos,
+                                                                                                    authors_labels,
+                                                                                                    test_size=0.1,
+                                                                                                    random_state=42,
+                                                                                                    stratify=authors_labels)
     # divide the train+val so that the dataset is train/val/test
-    x_tr, x_val, x_tr_cltk, x_val_cltk, y_tr, y_val = train_test_split(x_trval, x_trval_cltk, y_trval, test_size=0.1,
-                                                                       random_state=42, stratify=y_trval)
-    exp_dataset = {'x_tr': x_tr, 'x_val': x_val, 'x_tr_cltk': x_tr_cltk, 'x_val_cltk': x_val_cltk, 'y_tr': y_tr,
-                   'y_val': y_val}
+    x_tr, x_val, x_tr_cltk, x_val_cltk, x_tr_pos, x_val_pos, y_tr, y_val = train_test_split(x_trval, x_trval_cltk,
+                                                                                            x_trval_pos, y_trval,
+                                                                                            test_size=0.1,
+                                                                                            random_state=42,
+                                                                                            stratify=y_trval)
+    exp_dataset = {'x_tr': x_tr, 'x_val': x_val, 'x_tr_cltk': x_tr_cltk, 'x_val_cltk': x_val_cltk, 'x_tr_pos': x_tr_pos,
+                   'x_val_pos': x_val_pos, 'y_tr': y_tr, 'y_val': y_val}
     print(f'#training samples = {len(y_tr)}')
     print(f'#validation samples = {len(y_val)}')
     print(f'#test samples = {len(y_te)}')
@@ -203,7 +208,7 @@ def _TrValTe_crossval(dataset, features_params):
     print(f'Best macro-f1: {results[best_result_idx]:.3f}')
     print('CLASSIFICATION')
     cls = LinearSVC(class_weight='balanced', random_state=42, C=best_C)
-    X_trval, X_te = featuresExtractor(x_trval, x_te, x_trval_cltk, x_te_cltk, y_trval, **best_feat_params)
+    X_trval, X_te = featuresExtractor(x_trval, x_te, x_trval_cltk, x_te_cltk, x_trval_pos, x_te_pos, y_trval, **best_feat_params)
     cls.fit(X_trval, y_trval)
     y_pred = cls.predict(X_te)
     print("Training shape: ", X_trval.shape)
@@ -214,7 +219,7 @@ def _TrValTe_crossval(dataset, features_params):
 # perform leave-one-out cross-validation
 # training on fragments and whole texts, test only on whole texts
 def _loo_crossval(dataset, features_params):
-    authors, titles, data, data_cltk, authors_labels, titles_labels = data_for_loo(dataset)
+    authors, titles, data, data_cltk, data_pos, authors_labels, titles_labels = data_for_loo(dataset)
     print('Tot. fragments + whole texts:', len(data))
     y_all_pred = []
     y_all_te = []
@@ -231,12 +236,14 @@ def _loo_crossval(dataset, features_params):
         else:
             x_tr = data[train_index]
             x_tr_cltk = data_cltk[train_index]
+            x_tr_pos = data_pos[train_index]
             x_te = [data[test_index[0]]]
             x_te_cltk = [data_cltk[test_index[0]]]
+            x_te_pos = [data_pos[test_index[0]]]
             y_tr = authors_labels[train_index]
             y_te = [authors_labels[test_index[0]]]
             print('FEATURE EXTRACTION')
-            X_tr, X_te = featuresExtractor(x_tr, x_te, x_tr_cltk, x_te_cltk, y_tr, **features_params)
+            X_tr, X_te = featuresExtractor(x_tr, x_te, x_tr_cltk, x_te_cltk, x_tr_pos, x_te_pos, y_tr, **features_params)
             print("Training shape: ", X_tr.shape)
             print("Test shape: ", X_te.shape)
             tot_features.append(X_tr.shape[1])

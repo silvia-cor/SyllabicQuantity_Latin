@@ -4,7 +4,7 @@ import nltk
 from scipy.sparse import hstack, csr_matrix
 from sklearn.preprocessing import normalize
 from general.helpers import get_function_words, tokenize_nopunct, metric_scansion, dis_DVMA, dis_DVSA, dis_DVEX, \
-    dis_DVL2
+    dis_DVL2, pos_tags
 
 
 # ------------------------------------------------------------------------
@@ -80,14 +80,23 @@ def _vector_dis(doc_train, doc_test):
     return f_train, f_test
 
 
+def _vector_pos(doc_train, doc_test):
+    vectorizer = TfidfVectorizer(analyzer='word', ngram_range=(1, 1), use_idf=False, norm="l1",  # the relative frequency
+                                 token_pattern=r"(?u)\b\w+\b")
+    f_train = vectorizer.fit_transform(doc_train)
+    f_test = vectorizer.transform(doc_test)
+    return f_train, f_test
+
+
 # ------------------------------------------------------------------------
 # Feature Extractor
 # ------------------------------------------------------------------------
-def featuresExtractor(doc_train, doc_test, cltk_train, cltk_test, y_tr, lang='latin',
+def featuresExtractor(doc_train, doc_test, cltk_train, cltk_test, pos_train, pos_test, y_tr, lang='latin',
                       SQ_selection_ratio=1,
                       function_words_freq=True,
                       word_lengths_freq=True,
                       sentence_lengths_freq=True,
+                      pos=True,
                       DVMA=False,
                       DVSA=False,
                       DVEX=False,
@@ -139,6 +148,12 @@ def featuresExtractor(doc_train, doc_test, cltk_train, cltk_test, y_tr, lang='la
         f = normalize(_sentence_lengths_freq(doc_test))
         X_te = hstack((X_te, f))
         print(f'task sentence lengths (#features={f.shape[1]}) [Done]')
+
+    if pos:
+        f_train, f_test = _vector_pos(pos_train, pos_test)
+        X_tr = hstack((X_tr, normalize(csr_matrix(f_train))))
+        X_te = hstack((X_te, normalize(csr_matrix(f_test))))
+        print(f'task pos-tags (#features={f_train.shape[1]}) [Done]')
 
     if DVMA:
         dis_train = dis_DVMA(doc_train, fw)

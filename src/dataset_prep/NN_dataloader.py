@@ -1,5 +1,5 @@
 from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import numpy as np
 import random
 import torch
@@ -12,43 +12,45 @@ from sklearn.preprocessing import normalize
 
 # pytorch Dataset class (for DataLoader)
 class NN_BaseDataset(Dataset):
-    def __init__(self, x, x_cltk, y):
+    def __init__(self, x, x_cltk, x_pos, y):
         self.x = x
         self.x_cltk = x_cltk
+        self.x_pos = x_pos
         self.y = y
 
     def __len__(self):
         return len(self.y)
 
     def __getitem__(self, index):
-        return self.x[index], self.x_cltk[index], self.y[index]
+        return self.x[index], self.x_cltk[index], self.x_pos[index], self.y[index]
 
 
 # main class: create and divides (train/test, batches) the dataset_prep
 class NN_DataLoader:
-    def __init__(self, data, data_cltk, authors_labels, NN_params, batch_size):
+    def __init__(self, data, data_cltk, data_pos, authors_labels, NN_params, batch_size):
         print('----- CREATING DATASET -----')
         self.function_words = get_function_words('latin') # for distortion techniques
         self.vocab_lens = {}
         self.NN_params = NN_params
         # devide the dataset into train+val and test
-        x_trval, x_te, x_trval_cltk, x_te_cltk, y_trval, y_te = train_test_split(data, data_cltk, authors_labels, test_size=0.1, random_state=42, stratify=authors_labels)
+        x_trval, x_te, x_trval_cltk, x_te_cltk, x_trval_pos, x_te_pos, y_trval, y_te = train_test_split(data, data_cltk, data_pos, authors_labels, test_size=0.1, random_state=42, stratify=authors_labels)
         # divide the train+val so that the dataset is train/val/test
-        x_tr, x_val, x_tr_cltk, x_val_cltk, y_tr, y_val = train_test_split(x_trval, x_trval_cltk, y_trval, test_size=0.1, random_state=42, stratify=y_trval)
+        x_tr, x_val, x_tr_cltk, x_val_cltk, x_tr_pos, x_val_pos, y_tr, y_val = train_test_split(x_trval, x_trval_cltk, x_trval_pos, y_trval, test_size=0.1, random_state=42, stratify=y_trval)
 
         print(f'#training samples = {len(y_tr)}')
         print(f'#validation samples = {len(y_val)}')
         print(f'#test samples = {len(y_te)}')
 
-        # sort the sets by lengths (for padding)
-        # self.x_tr, self.y_tr = self._sort_docs(x_tr, y_tr)
-        # self.x_te, self.y_te = self._sort_docs(x_te, y_te)
+        self.pos_vectorizer = TfidfVectorizer(analyzer='word', ngram_range=(1, 1), use_idf=False, norm="l1",
+                                              token_pattern=r"(?u)\b\w+\b")
+        self.pos_vectorizer.fit(x_tr_pos)
+        self.bf_length = 205 + len(self.pos_vectorizer.vocabulary_)
 
         # create the analyzer for each encoding: a CountVectorizer based on training samples
         print('----- CREATING ANALYZERS -----')
         if self.NN_params['FAKE']:
             # fake syllabic quantities
-            # Make a word-based CountVectorizer based on the entire dataset
+            # Make a word-based CountVectorizer
             anal_words = CountVectorizer(analyzer='word', ngram_range=(1, 1)).fit(np.concatenate((x_trval, x_te)))
             print(f'Word analyzer [Done]')
             # Transform the vocabulary so that each word corresponds to a random SQ sequence
@@ -90,17 +92,18 @@ class NN_DataLoader:
             print(f'DVL2 analyzer [Done]')
 
         # create the train/val/test generator (for batches)
-        train_dataset = NN_BaseDataset(x_tr, x_tr_cltk, y_tr)
+        train_dataset = NN_BaseDataset(x_tr, x_tr_cltk, x_tr_pos, y_tr)
         self.train_generator = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
-        val_dataset = NN_BaseDataset(x_val, x_val_cltk, y_val)
+        val_dataset = NN_BaseDataset(x_val, x_val_cltk, x_val_pos, y_val)
         self.val_generator = DataLoader(val_dataset, batch_size, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
-        test_dataset = NN_BaseDataset(x_te, x_te_cltk, y_te)
+        test_dataset = NN_BaseDataset(x_te, x_te_cltk, x_te_pos, y_te)
         self.test_generator = DataLoader(test_dataset, batch_size, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
 
     def _collate_padding(self, batch):
         data = [item[0] for item in batch]
         data_cltk = [item[1] for item in batch]
-        labels = [item[2] for item in batch]
+        data_pos = [item[2] for item in batch]
+        labels = [item[3] for item in batch]
         encodings = {}
         if self.NN_params['FAKE']:
             dis_data = self._encode(fake_metric_scansion(data, self.fake_vocab), self.anal_FAKE)
@@ -121,7 +124,7 @@ class NN_DataLoader:
             dis_data = self._encode(dis_DVL2(data, self.function_words), self.anal_DVL2)
             encodings['DVL2'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True, padding_value=self.anal_DVL2.vocabulary_['<pad>']).long()
         targets = torch.Tensor(labels).long()
-        feats = _features(data, self.function_words)
+        feats = _features(data, data_pos, self.function_words, self.pos_vectorizer)
         return encodings, targets, feats
 
     # set the seed for the DataLoader worker
@@ -147,7 +150,7 @@ class NN_DataLoader:
         return encoded_texts
 
 
-def _features(documents, function_words, upto=26, min=1, max=101):
+def _features(documents, documents_pos, function_words, vectorizer, upto=26, min=1, max=101):
     features_all = []
     for text in documents:
         feats = []
@@ -172,4 +175,8 @@ def _features(documents, function_words, upto=26, min=1, max=101):
             sent_count.append((sum(j >= i for j in sent_len)) / nsent)
         feats.extend(sent_count)
         features_all.append(feats)
-    return torch.Tensor(normalize(features_all))
+    features_all = torch.Tensor(normalize(features_all))
+    pos = vectorizer.transform(documents_pos)
+    pos = torch.from_numpy(pos.todense())
+    final_features = torch.cat((features_all, pos), dim=1).float()
+    return final_features

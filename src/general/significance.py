@@ -38,9 +38,6 @@ def significance_test(y_true, y_baseline, y_method, baseline_name):
         print('Same proportion (difference is not significant)')
     else:
         print('Different proportion (difference is significant)')
-    return p
-
-
 
 
 

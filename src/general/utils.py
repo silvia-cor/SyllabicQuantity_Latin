@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 # pickle the output of a function
-def pickled_resource(pickle_path:str, generation_func:callable, *args, **kwargs):
+def pickled_resource(pickle_path: str, generation_func: callable, *args, **kwargs):
     if pickle_path is None:
         return generation_func(*args, **kwargs)
     else:
@@ -27,4 +27,3 @@ def sort_docs(docs, labels):
 # return max doc length in a series of documents
 def docs_max_len(docs):
     return len(max(docs, key=len))
-

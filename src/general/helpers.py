@@ -8,6 +8,7 @@ from cltk.prosody.lat.scanner import Scansion
 import numpy as np
 import itertools
 from tqdm import tqdm
+from cltk.tag.pos import POSTag
 
 # ------------------------------------------------------------------------
 # functions for managing the text processing
@@ -35,7 +36,8 @@ def get_function_words(lang):
 # tokenize text without punctuation
 def tokenize_nopunct(text):
     unmod_tokens = nltk.word_tokenize(text)
-    return [token.lower() for token in unmod_tokens if any(char.isalpha() for char in token)]  # checks whether all the chars are alphabetic
+    return [token.lower() for token in unmod_tokens if
+            any(char.isalpha() for char in token)]  # checks whether all the chars are alphabetic
 
 
 # ------------------------------------------------------------------------
@@ -46,7 +48,8 @@ def tokenize_nopunct(text):
 def make_fake_vocab(analyzer):
     for vocab in analyzer.vocabulary_:
         n = len(vocab) // 3 if len(vocab) // 3 > 1 else 1
-        analyzer.vocabulary_[vocab] = ''.join(np.random.choice(np.asarray(['u', 'x', '-']), size=n, replace=True).tolist())
+        analyzer.vocabulary_[vocab] = ''.join(
+            np.random.choice(np.asarray(['u', 'x', '-']), size=n, replace=True).tolist())
     return analyzer
 
 
@@ -66,8 +69,10 @@ def fake_metric_scansion(docs, analyzer):
 # to do: parallelize
 def metric_scansion(docs):
     macronizer = Macronizer('tag_ngram_123_backoff')
-    scanner = Scansion(clausula_length=100000)  # clausula_length was 13, it didn't get the string before that point (it goes backward)
-    scanned_texts = [scanner.scan_text(macronizer.macronize_text(doc)) for doc in tqdm(docs, 'metric scansion', total=len(docs))]
+    scanner = Scansion(
+        clausula_length=100000)  # clausula_length was 13, it didn't get the string before that point (it goes backward)
+    scanned_texts = [scanner.scan_text(macronizer.macronize_text(doc)) for doc in
+                     tqdm(docs, 'metric scansion', total=len(docs))]
     scanned_texts = [''.join(scanned_text) for scanned_text in scanned_texts]  # concatenate the sentences
     return scanned_texts
 
@@ -150,6 +155,19 @@ def dis_DVL2(docs, function_words):
     return dis_texts
 
 
+def pos_tags(docs):
+    tagger = POSTag('lat')
+    pos_texts = []
+    for i, doc in enumerate(tqdm(docs, 'pos-tagging', total=len(docs))):
+        if i == 0:
+            pos_texts.append('')  # the whole text cannot be pos-tagged
+        else:
+            tags = [tag for word, tag in tagger.tag_tnt(doc)]
+            pos_tags = [tag[0] if tag != 'Unk' else 'Unk' for tag in tags]
+            pos_texts.append(' '.join(pos_tags))
+    return pos_texts
+
+
 # ------------------------------------------------------------------------
 # functions to split the text into fragments of (n_sentences) sentences
 # ------------------------------------------------------------------------
@@ -174,7 +192,8 @@ def _split_sentences(text):
             if i < len(sentences) - 1:
                 sentences[i + 1] = sentences[i] + ' ' + sentences[i + 1]  # combined with the next sentence
             else:
-                sentences[i - 1] = sentences[i - 1] + ' ' + sentences[i]  # or the previous one if it was the last sentence
+                sentences[i - 1] = sentences[i - 1] + ' ' + sentences[
+                    i]  # or the previous one if it was the last sentence
             sentences.pop(i)  # and deleted as a standalone sentence
     return sentences
 
@@ -191,6 +210,7 @@ def _group_sentences(sentences, window_size):
         new_fragments.append(' '.join(sentences[offset:offset + window_size]))
     return new_fragments
 
+
 # ------------------------------------------------------------------------
 # functions to prepare the dataset for k-fold or loo cross-validation
 # ------------------------------------------------------------------------
@@ -202,9 +222,10 @@ def data_for_kfold(dataset):
     titles = np.array(dataset.titles)
     data = np.array([sub_list[i] for sub_list in dataset.data for i in range(1, len(sub_list))], dtype=object)
     data_cltk = np.array([sub_list[i] for sub_list in dataset.data_cltk for i in range(1, len(sub_list))], dtype=object)
+    data_pos = np.array([sub_list[i] for sub_list in dataset.data_pos for i in range(1, len(sub_list))], dtype=object)
     authors_labels = np.array([sub_list[i] for sub_list in dataset.authors_labels for i in range(1, len(sub_list))])
     titles_labels = np.array([sub_list[i] for sub_list in dataset.titles_labels for i in range(1, len(sub_list))])
-    return authors, titles, data, data_cltk, authors_labels, titles_labels
+    return authors, titles, data, data_cltk, data_pos, authors_labels, titles_labels
 
 
 # prepares dataset for loo (transform everything into numpy array)
@@ -213,8 +234,7 @@ def data_for_loo(dataset):
     titles = np.array(dataset.titles)
     data = np.array(list(itertools.chain.from_iterable(dataset.data)), dtype=object)
     data_cltk = np.array(list(itertools.chain.from_iterable(dataset.data_cltk)), dtype=object)
+    data_pos = np.array(list(itertools.chain.from_iterable(dataset.data_pos)), dtype=object)
     authors_labels = np.array(list(itertools.chain.from_iterable(dataset.authors_labels)))
     titles_labels = np.array(list(itertools.chain.from_iterable(dataset.titles_labels)))
-    return authors, titles, data, data_cltk, authors_labels, titles_labels
-
-
+    return authors, titles, data, data_cltk, data_pos, authors_labels, titles_labels

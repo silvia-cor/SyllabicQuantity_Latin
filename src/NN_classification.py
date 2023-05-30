@@ -1,4 +1,3 @@
-from sklearn.model_selection import StratifiedKFold
 import numpy as np
 import random
 from tqdm import tqdm
@@ -13,12 +12,11 @@ from general.helpers import data_for_kfold
 from general.significance import significance_test
 from dataset_prep.NN_dataloader import NN_DataLoader
 from NN_models.NN_cnn_cat import Penta_Cat
-from NN_models.NN_attn import Penta_Attn
 from NN_models.NN_cnn_shallow_ensemble import Penta_ShallowEnsemble
 from NN_models.NN_cnn_deep_ensemble import Penta_DeepEnsemble
-from NN_models.NN_lstm import Penta_Lstm
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+torch.multiprocessing.set_sharing_strategy('file_system')
 # for reproducibility
 torch.backends.cudnn.deterministic = True
 random.seed(42)
@@ -27,41 +25,37 @@ torch.cuda.manual_seed(42)
 np.random.seed(42)
 
 
-def NN_classification(dataset, NN_params, model_name, dataset_name, n_sent, pickle_path, batch_size=64):
-    os.makedirs(f'../NN_methods/{n_sent}sent', exist_ok=True)
-    available_models = ['cnn_cat', 'attn', 'cnn_deep_ensemble', 'cnn_shallow_ensemble', 'lstm']
+def NN_classification(dataset, NN_params, learner, dataset_name, n_sent, pickle_path, batch_size=64):
+    available_models = ['cnn_cat', 'cnn_deep_ensemble', 'cnn_shallow_ensemble']
     assert not (NN_params['FAKE'] and NN_params['SQ']), 'Can have FAKE or SQ channel, but not both'
-    assert model_name in available_models, f'Model not implemented, available models: {available_models}'
+    assert learner in available_models, f'Model not implemented, available models: {available_models}'
     if os.path.exists(pickle_path):
         with open(pickle_path, 'rb') as handle:
             df = pickle.load(handle)
     else:
         df = {}
     method_name = _create_method_name(NN_params)
+    os.makedirs(f'../NN_methods/{n_sent}sent/{dataset_name}', exist_ok=True)
+    model_path = f'../NN_methods/{n_sent}sent/{dataset_name}/{method_name}.pt'
     if method_name in df:
-        print(f'NN experiment {method_name} for model {model_name} already done!')
+        print(f'NN experiment {method_name} for model {learner} already done!')
     else:
-        print(f'----- NN EXPERIMENT {method_name} for model {model_name} -----')
-        authors, titles, data, data_cltk, authors_labels, titles_labels = data_for_kfold(dataset)
-        dataset = NN_DataLoader(data, data_cltk, authors_labels, NN_params, batch_size=batch_size)
+        print(f'----- NN EXPERIMENT {method_name} for model {learner} -----')
+        authors, titles, data, data_cltk, data_pos, authors_labels, titles_labels = data_for_kfold(dataset)
+        dataset = NN_DataLoader(data, data_cltk, data_pos, authors_labels, NN_params, batch_size=batch_size)
         # model = Penta_NN(NN_params, dataset.vocab_lens, len(authors), 205).to(device)
-        if model_name == 'cnn_cat':
-            model = Penta_Cat(NN_params, dataset.vocab_lens, len(authors), start_dim_dense=205, device=device).to(device)
-        elif model_name == 'attn':
-            model = Penta_Attn(NN_params, dataset.vocab_lens, len(authors), start_dim_dense=0, device=device).to(device)
-        elif model_name == 'cnn_deep_ensemble':
-            model = Penta_DeepEnsemble(NN_params, dataset.vocab_lens, len(authors), device=device).to(device)
-        elif model_name == 'cnn_shallow_ensemble':
-            model = Penta_ShallowEnsemble(NN_params, dataset.vocab_lens, len(authors), device=device).to(device)
-        elif model_name == 'lstm':
-            model = Penta_Lstm(NN_params, dataset.vocab_lens, len(authors), start_dim_dense=0, device=device).to(device)
+        if learner == 'cnn_cat':
+            model = Penta_Cat(NN_params, dataset.vocab_lens, len(authors), feat_dim=dataset.bf_length, device=device).to(device)
+        elif learner == 'cnn_deep_ensemble':
+            model = Penta_DeepEnsemble(NN_params, dataset.vocab_lens, len(authors), feat_dim=dataset.bf_length,
+                                       device=device).to(device)
         else:
-            model = None
+            model = Penta_ShallowEnsemble(NN_params, dataset.vocab_lens, len(authors), feat_dim=dataset.bf_length,
+                                          device=device).to(device)
         print('Total paramaters:', sum(p.numel() for p in model.parameters() if p.requires_grad))
         print('Device:', device)
-        val_f1s = _train(model, NN_params, dataset.train_generator, dataset.val_generator, f'../NN_methods/{dataset_name}/{method_name}.pt',
-                            n_epochs=5000, patience=100)
-        y_preds, y_te = _test(model, NN_params, dataset.test_generator, f'../NN_methods/{dataset_name}/{method_name}.pt')
+        val_f1s = _train(model, NN_params, dataset.train_generator, dataset.val_generator, model_path, n_epochs=5000, patience=100)
+        y_preds, y_te = _test(model, NN_params, dataset.test_generator, model_path)
         if 'True' not in df:
             df['True'] = {}
             df['True']['labels'] = y_te
@@ -80,16 +74,25 @@ def NN_classification(dataset, NN_params, model_name, dataset_name, n_sent, pick
     # significance test if SQ are in the features with another method
     # significance test is against the same method without SQ
     if ' + SQ' in method_name or ' + FAKE' in method_name:
-        baseline = method_name.split(' + ')[0]
-        if baseline in df:
-            print(f'COMPARISON WITH BASELINE {baseline}')
-            delta_macro = (df[method_name]['macroF1'] - df[baseline]['macroF1']) / df[baseline]['macroF1'] * 100
-            delta_micro = (df[method_name]['microF1'] - df[baseline]['microF1']) / df[baseline]['microF1'] * 100
-            print(f'Macro-F1 Delta %: {delta_macro:.2f}')
-            print(f'Micro-F1 Delta %: {delta_micro:.2f}')
-            significance_test(df['True']['labels'], df[baseline]['preds'], df[method_name]['preds'], baseline)
-        else:
-            print(f'No {baseline} saved, significance test cannot be performed :/')
+        baselines = []
+        baseline = ''
+        if ' + SQ' in method_name:
+            baseline = method_name.split(' + SQ')[0]
+            baselines.append(baseline + ' + FAKE')
+        if ' + FAKE' in method_name:
+            baseline = method_name.split(' + FAKE')[0]
+            baselines.append(baseline + ' + SQ')
+        baselines.append(baseline)
+        for baseline in baselines:
+            if baseline in df:
+                print(f'COMPARISON WITH BASELINE {baseline}')
+                delta_macro = (df[method_name]['macroF1'] - df[baseline]['macroF1']) / df[baseline]['macroF1'] * 100
+                delta_micro = (df[method_name]['microF1'] - df[baseline]['microF1']) / df[baseline]['microF1'] * 100
+                print(f'Macro-F1 Delta %: {delta_macro:.2f}')
+                print(f'Micro-F1 Delta %: {delta_micro:.2f}')
+                significance_test(df['True']['labels'], df[baseline]['preds'], df[method_name]['preds'], baseline)
+            else:
+                print(f'No {baseline} saved, significance test cannot be performed :/')
     else:
         print('No significance test requested')
 
@@ -125,7 +128,6 @@ def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs
     os.makedirs(Path(save_path).parent, exist_ok=True)
     optimizer = optim.Adam(params=model.parameters())
     xavier_uniform(model)
-
     criterion = nn.CrossEntropyLoss().to(device)
     val_f1scores = []
     epochs_no_improv = 0
@@ -181,18 +183,20 @@ def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs
             if epochs_no_improv == patience and epoch > 49:
                 print("Early stopping!")
                 break
-
     model.load_state_dict(torch.load(save_path))
     model.train()
-    for encodings, targets, feats in val_generator:
-        optimizer.zero_grad()
-        targets = targets.to(device)
-        feats = feats.to(device)
-        preds = model(NN_params, encodings, feats)
-        # preds = model(NN_params, encodings)
-        loss = criterion(preds, targets)
-        loss.backward()
-        optimizer.step()
+    trainval_generator = [d for dl in [train_generator, val_generator] for d in dl]
+    for epoch in range(10):
+        with tqdm(trainval_generator, unit="batch") as train:
+            for encodings, targets, feats in train:
+                optimizer.zero_grad()
+                targets = targets.to(device)
+                feats = feats.to(device)
+                preds = model(NN_params, encodings, feats)
+                # preds = model(NN_params, encodings)
+                loss = criterion(preds, targets)
+                loss.backward()
+                optimizer.step()
     torch.save(model.state_dict(), save_path)
     return val_f1scores
 

@@ -2,7 +2,7 @@ import re
 import os
 import numpy as np
 import pathlib
-from general.helpers import splitter, metric_scansion
+from general.helpers import splitter, metric_scansion, pos_tags
 
 
 class dataset_KabalaCorpusA:
@@ -29,6 +29,7 @@ class dataset_KabalaCorpusA:
         self.authors = np.unique([title.split(' ', 1)[0] for title in self.titles]).tolist()
         self.data = []
         self.data_cltk = []
+        self.data_pos = []
         self.authors_labels = []
         self.titles_labels = []
         for i, file in enumerate(self.titles):
@@ -38,6 +39,7 @@ class dataset_KabalaCorpusA:
             fragments = splitter(text, n_sent)
             self.data.append(fragments)
             self.data_cltk.append(metric_scansion(fragments))
+            self.data_pos.append(pos_tags(fragments))
             # add corresponding title label, one for each fragment
             self.titles_labels.append([i] * len(fragments))
             if author is not None:

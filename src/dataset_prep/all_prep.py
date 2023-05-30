@@ -12,6 +12,7 @@ class dataset_all:
         self.authors = corpus_KabalaCorpusA.authors + corpus_LatinitasAntiqua.authors + corpus_MedLatin.authors
         self.data = corpus_KabalaCorpusA.data + corpus_LatinitasAntiqua.data + corpus_MedLatin.data
         self.data_cltk = corpus_KabalaCorpusA.data_cltk + corpus_LatinitasAntiqua.data_cltk + corpus_MedLatin.data_cltk
+        self.data_pos = corpus_KabalaCorpusA.data_pos + corpus_LatinitasAntiqua.data_pos + corpus_MedLatin.data_pos
         self.authors_labels = []
         self.titles_labels = []
 

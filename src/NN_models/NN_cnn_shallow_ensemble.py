@@ -4,13 +4,12 @@ import torch.nn.functional as F
 
 
 class Penta_ShallowEnsemble(nn.Module):
-    def __init__(self, NN_params, vocab_lens, n_labels, device):
+    def __init__(self, NN_params, vocab_lens, n_labels, feat_dim, device):
         super().__init__()
         self.emb_len = 32
-        self.kernel_size = [3]
-        self.kernel_sizes = [3, 4, 5]
+        self.kernel_sizes = [3, 5]
         self.cnn_out_size = 256
-        self.feat_dim = 205
+        self.feat_dim = feat_dim
         self.dense_size = 512
         self.n_labels = n_labels
         self.device = device
@@ -19,13 +18,13 @@ class Penta_ShallowEnsemble(nn.Module):
         if NN_params['SQ']:
             self.embed_SQ, self.cnn_SQ, self.dense_SQ = self.make_layers(vocab_lens['SQ'], self.kernel_sizes)
         if NN_params['DVMA']:
-            self.embed_DVMA, self.cnn_DVMA, self.dense_DVMA = self.make_layers(vocab_lens['DVMA'], self.kernel_size)
+            self.embed_DVMA, self.cnn_DVMA, self.dense_DVMA = self.make_layers(vocab_lens['DVMA'], self.kernel_sizes)
         if NN_params['DVSA']:
-            self.embed_DVSA, self.cnn_DVSA, self.dense_DVSA = self.make_layers(vocab_lens['DVSA'], self.kernel_size)
+            self.embed_DVSA, self.cnn_DVSA, self.dense_DVSA = self.make_layers(vocab_lens['DVSA'], self.kernel_sizes)
         if NN_params['DVEX']:
-            self.embed_DVEX, self.cnn_DVEX, self.dense_DVEX = self.make_layers(vocab_lens['DVEX'], self.kernel_size)
+            self.embed_DVEX, self.cnn_DVEX, self.dense_DVEX = self.make_layers(vocab_lens['DVEX'], self.kernel_sizes)
         if NN_params['DVL2']:
-            self.embed_DVL2, self.cnn_DVL2, self.dense_DVL2 = self.make_layers(vocab_lens['DVL2'], self.kernel_size)
+            self.embed_DVL2, self.cnn_DVL2, self.dense_DVL2 = self.make_layers(vocab_lens['DVL2'], self.kernel_sizes)
         self.flat = nn.Flatten()
         self.drop = nn.Dropout(0.5)
         self.maxpool = nn.MaxPool1d(3)
@@ -35,9 +34,9 @@ class Penta_ShallowEnsemble(nn.Module):
 
     def forward(self, NN_params, encodings, feats):
         outputs = []
-        f = self.feat_dense1(F.relu(feats))
+        f = F.relu(self.feat_dense1(feats))
         f = self.drop(f)
-        f = self.feat_dense2(F.relu(f))
+        f = F.relu(self.feat_dense2(f))
         outputs.append(f.unsqueeze(dim=2))
         if NN_params['FAKE']:
             outputs.append(self.sub_forward(encodings['FAKE'], self.embed_FAKE, self.cnn_FAKE, self.dense_FAKE).unsqueeze(dim=2))
@@ -69,23 +68,17 @@ class Penta_ShallowEnsemble(nn.Module):
 
     def make_layers(self, vocab_len, kernel_sizes):
         embed = nn.Embedding(vocab_len, self.emb_len)
-        # cnn = nn.Conv1d(self.emb_len, self.cnn_out_size, kernel_size=self.kernel_size)
         if len(kernel_sizes) > 1:
             cnn = nn.ModuleList([nn.Conv1d(self.emb_len, self.cnn_out_size, kernel_size) for kernel_size in kernel_sizes])
         else:
             cnn = nn.Conv1d(self.emb_len, self.cnn_out_size, kernel_sizes[0])
-        dense = nn.Linear(self.cnn_out_size, self.n_labels)
+        dense = nn.Linear(self.cnn_out_size*len(self.kernel_sizes), self.n_labels)
         return embed, cnn, dense
 
     def sub_forward(self, encoding, embed_layer, cnn_layer, dense_layer):
         x = embed_layer(encoding.to(self.device))
-        # x = self.conv_block(x, cnn_layer)
         if isinstance(cnn_layer, nn.ModuleList):
             x = [self.conv_block(x, conv_kernel) for conv_kernel in cnn_layer]
-            # x = torch.cat(x, dim=2)
-            # L = x.size()[2]
-            # x = F.max_pool1d(x, L)
-            # x = x.squeeze(2)
             x = torch.cat(x, 1)
         else:
             x = self.conv_block(x, cnn_layer)
