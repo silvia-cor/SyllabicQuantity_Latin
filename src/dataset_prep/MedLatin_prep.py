@@ -5,12 +5,13 @@ from general.helpers import splitter, metric_scansion, pos_tags
 
 
 class dataset_MedLatin:
-    def __init__(self, dir_path="../dataset/MedLatin", n_sent=10, cleaning=False):
+    def __init__(self, dir_path, n_sent=10, cleaning=False):
         """
         :param dir_path: path to the dataset directory, default: "../dataset/MedLatin"
         :param n_sent: number of sentences forming a fragment, default: 10
         :param cleaning: trigger the custom cleaning of the texts, default: False
         """
+
         if not os.path.exists(dir_path):
             print('Dataset not found!')
             exit(0)

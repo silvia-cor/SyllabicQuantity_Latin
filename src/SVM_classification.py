@@ -19,11 +19,11 @@ if not sys.warnoptions:
 
 
 # ------------------------------------------------------------------------
-# class to do (classical ML) classification
+# class to do (classical) ML classification
 # ------------------------------------------------------------------------
 
 
-def SVM_classification(dataset, features_params, pickle_path, cv_method='1fold'):
+def SVM_classification(dataset, features_params, pickle_path, cv_method='1fold', random_state=42):
     if os.path.exists(pickle_path):
         with open(pickle_path, 'rb') as handle:
             df = pickle.load(handle)
@@ -35,11 +35,11 @@ def SVM_classification(dataset, features_params, pickle_path, cv_method='1fold')
     else:
         print(f'----- SVM EXPERIMENT {method_name} -----')
         if cv_method == 'kfold':
-            y_all_pred, y_all_te, best_Cs, tot_features = _kfold_crossval(dataset, features_params)
+            y_all_pred, y_all_te, best_Cs, tot_features = _kfold_crossval(dataset, features_params, random_state)
         elif cv_method == 'loo':
-            y_all_pred, y_all_te, best_Cs, tot_features = _loo_crossval(dataset, features_params)
+            y_all_pred, y_all_te, best_Cs, tot_features = _loo_crossval(dataset, features_params, random_state)
         else:
-            y_all_pred, y_all_te, best_Cs, tot_features = _1fold_crossval(dataset, features_params)
+            y_all_pred, y_all_te, best_Cs, tot_features = _1fold_crossval(dataset, features_params, random_state)
         if 'True' not in df:
             df['True'] = {}
             df['True']['labels'] = y_all_te
@@ -78,10 +78,7 @@ def SVM_classification(dataset, features_params, pickle_path, cv_method='1fold')
 def _create_method_name(features_params):
     methods = []
     dv_methods = ['DVMA', 'DVSA', 'DVEX', 'DVL2']
-    method_name = ''
-    if features_params['function_words_freq'] and features_params['word_lengths_freq'] and features_params[
-        'sentence_lengths_freq'] and features_params['pos']:
-        method_name += 'BaseFeatures'
+    method_name = 'BaseFeatures'
     for method in dv_methods:
         if features_params[method]:
             methods.append(method)
@@ -110,14 +107,14 @@ def _create_method_name(features_params):
 # perform kfold cross-validation using a LinearSVM
 # training and testing only on fragments
 # optimization done only for SVM parameter C via GridSearch
-def _kfold_crossval(dataset, features_params):
+def _kfold_crossval(dataset, features_params, random_state):
     authors, titles, data, data_cltk, data_pos, authors_labels, titles_labels = data_for_kfold(dataset)
     print('Tot. fragments:', len(data))
     y_all_pred = []
     y_all_te = []
     best_Cs = []
     tot_features = []
-    kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+    kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=random_state)
     for i, (train_index, test_index) in enumerate(kfold.split(data, authors_labels)):
         print(f'----- K-FOLD EXPERIMENT {i + 1} -----')
         x_tr = data[train_index]
@@ -135,7 +132,7 @@ def _kfold_crossval(dataset, features_params):
         tot_features.append(X_tr.shape[1])
         print('CLASSIFICATION')
         param_grid = {'C': [0.001, 0.01, 0.1, 1, 10, 100, 1000]}
-        cls = GridSearchCV(LinearSVC(class_weight='balanced', random_state=42), param_grid,
+        cls = GridSearchCV(LinearSVC(class_weight='balanced', random_state=random_state), param_grid,
                            scoring=make_scorer(f1_score, average='macro'), n_jobs=7)
         cls.fit(X_tr, y_tr)
         best_C = cls.best_params_['C']
@@ -153,7 +150,8 @@ def __single_TrVal_exp(configuration):
     C = configuration[0]
     feat_params = configuration[1]
     dataset = configuration[2]
-    cls = LinearSVC(class_weight='balanced', random_state=42, C=C)
+    random_state = configuration[3]
+    cls = LinearSVC(class_weight='balanced', random_state=random_state, C=C)
     X_tr, X_val = featuresExtractor(dataset['x_tr'], dataset['x_val'], dataset['x_tr_cltk'], dataset['x_val_cltk'],
                                     dataset['x_tr_pos'], dataset['x_val_pos'], dataset['y_tr'], **feat_params)
     cls.fit(X_tr, dataset['y_tr'])
@@ -165,20 +163,20 @@ def __single_TrVal_exp(configuration):
 # perform train-val-test validation using a LinearSVM
 # training and testing only on fragments
 # optimization of SVM parameter C (and SQ_selection_ratio if required) via GridSearch from scratch
-def _1fold_crossval(dataset, features_params):
+def _1fold_crossval(dataset, features_params, random_state):
     authors, titles, data, data_cltk, data_pos, authors_labels, titles_labels = data_for_kfold(dataset)
     # divide the dataset into train+val and test
     x_trval, x_te, x_trval_cltk, x_te_cltk, x_trval_pos, x_te_pos, y_trval, y_te = train_test_split(data, data_cltk,
                                                                                                     data_pos,
                                                                                                     authors_labels,
                                                                                                     test_size=0.1,
-                                                                                                    random_state=42,
+                                                                                                    random_state=random_state,
                                                                                                     stratify=authors_labels)
     # divide the train+val so that the dataset is train/val/test
     x_tr, x_val, x_tr_cltk, x_val_cltk, x_tr_pos, x_val_pos, y_tr, y_val = train_test_split(x_trval, x_trval_cltk,
                                                                                             x_trval_pos, y_trval,
                                                                                             test_size=0.1,
-                                                                                            random_state=42,
+                                                                                            random_state=random_state,
                                                                                             stratify=y_trval)
     exp_dataset = {'x_tr': x_tr, 'x_val': x_val, 'x_tr_cltk': x_tr_cltk, 'x_val_cltk': x_val_cltk, 'x_tr_pos': x_tr_pos,
                    'x_val_pos': x_val_pos, 'y_tr': y_tr, 'y_val': y_val}
@@ -193,9 +191,9 @@ def _1fold_crossval(dataset, features_params):
             for fs_ratio in fs_ratios:
                 new_feat_params = features_params.copy()
                 new_feat_params['SQ_selection_ratio'] = fs_ratio
-                configurations.append((C, new_feat_params, exp_dataset))
+                configurations.append((C, new_feat_params, exp_dataset, random_state))
         else:
-            configurations.append((C, features_params, exp_dataset))
+            configurations.append((C, features_params, exp_dataset, random_state))
     print('PARAMETERS OPTIMIZATION')
     results = process_map(__single_TrVal_exp, configurations, max_workers=8)
     best_result_idx = results.index(max(results, key=lambda result: result))
@@ -207,8 +205,9 @@ def _1fold_crossval(dataset, features_params):
         print('Best f1_ratio:', best_feat_params['SQ_selection_ratio'])
     print(f'Best macro-f1: {results[best_result_idx]:.3f}')
     print('CLASSIFICATION')
-    cls = LinearSVC(class_weight='balanced', random_state=42, C=best_C)
-    X_trval, X_te = featuresExtractor(x_trval, x_te, x_trval_cltk, x_te_cltk, x_trval_pos, x_te_pos, y_trval, **best_feat_params)
+    cls = LinearSVC(class_weight='balanced', random_state=random_state, C=best_C)
+    X_trval, X_te = featuresExtractor(x_trval, x_te, x_trval_cltk, x_te_cltk, x_trval_pos, x_te_pos, y_trval,
+                                      **best_feat_params)
     cls.fit(X_trval, y_trval)
     y_pred = cls.predict(X_te)
     print("Training shape: ", X_trval.shape)
@@ -218,7 +217,7 @@ def _1fold_crossval(dataset, features_params):
 
 # perform leave-one-out cross-validation
 # training on fragments and whole texts, test only on whole texts
-def _loo_crossval(dataset, features_params):
+def _loo_crossval(dataset, features_params, random_state):
     authors, titles, data, data_cltk, data_pos, authors_labels, titles_labels = data_for_loo(dataset)
     print('Tot. fragments + whole texts:', len(data))
     y_all_pred = []
@@ -243,13 +242,14 @@ def _loo_crossval(dataset, features_params):
             y_tr = authors_labels[train_index]
             y_te = [authors_labels[test_index[0]]]
             print('FEATURE EXTRACTION')
-            X_tr, X_te = featuresExtractor(x_tr, x_te, x_tr_cltk, x_te_cltk, x_tr_pos, x_te_pos, y_tr, **features_params)
+            X_tr, X_te = featuresExtractor(x_tr, x_te, x_tr_cltk, x_te_cltk, x_tr_pos, x_te_pos, y_tr,
+                                           **features_params)
             print("Training shape: ", X_tr.shape)
             print("Test shape: ", X_te.shape)
             tot_features.append(X_tr.shape[1])
             print('CLASSIFICATION')
             param_grid = {'C': [0.001, 0.01, 0.1, 1, 10, 100, 1000]}
-            cls = GridSearchCV(LinearSVC(class_weight='balanced', random_state=42), param_grid,
+            cls = GridSearchCV(LinearSVC(class_weight='balanced', random_state=random_state), param_grid,
                                scoring=make_scorer(f1_score, average='macro'), n_jobs=7)
             cls.fit(X_tr, y_tr)
             best_C = cls.best_params_['C']

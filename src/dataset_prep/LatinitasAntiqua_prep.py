@@ -28,7 +28,7 @@ files_todelete = ['Cornelius_Celsus-De medicina - Ed. Daremberg.txt', 'Seneca-Ag
 # ------------------------------------------------------------------------
 
 class dataset_LatinitasAntiqua:
-    def __init__(self, dir_path="../dataset/LatinitasAntiqua", n_sent=10):
+    def __init__(self, dir_path, n_sent=10):
         """
         :param dir_path: path to the dataset directory, default: "../dataset/LatinitasAntiqua"
         :param n_sent: number of sentences forming a fragment, default: 10

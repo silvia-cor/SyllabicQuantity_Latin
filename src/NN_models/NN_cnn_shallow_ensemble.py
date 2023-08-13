@@ -7,24 +7,24 @@ class Penta_ShallowEnsemble(nn.Module):
     def __init__(self, NN_params, vocab_lens, n_labels, feat_dim, device):
         super().__init__()
         self.emb_len = 32
-        self.kernel_sizes = [3, 5]
-        self.cnn_out_size = 256
+        self.kernel_size = [3, 5]
+        self.cnn_out_size = 128
         self.feat_dim = feat_dim
-        self.dense_size = 512
+        self.dense_size = 256
         self.n_labels = n_labels
         self.device = device
         if NN_params['FAKE']:
-            self.embed_FAKE, self.cnn_FAKE, self.dense_FAKE = self.make_layers(vocab_lens['FAKE'], self.kernel_sizes)
+            self.embed_FAKE, self.cnn_FAKE, self.dense_FAKE = self.make_layers(vocab_lens['FAKE'], self.kernel_size)
         if NN_params['SQ']:
-            self.embed_SQ, self.cnn_SQ, self.dense_SQ = self.make_layers(vocab_lens['SQ'], self.kernel_sizes)
+            self.embed_SQ, self.cnn_SQ, self.dense_SQ = self.make_layers(vocab_lens['SQ'], self.kernel_size)
         if NN_params['DVMA']:
-            self.embed_DVMA, self.cnn_DVMA, self.dense_DVMA = self.make_layers(vocab_lens['DVMA'], self.kernel_sizes)
+            self.embed_DVMA, self.cnn_DVMA, self.dense_DVMA = self.make_layers(vocab_lens['DVMA'], self.kernel_size)
         if NN_params['DVSA']:
-            self.embed_DVSA, self.cnn_DVSA, self.dense_DVSA = self.make_layers(vocab_lens['DVSA'], self.kernel_sizes)
+            self.embed_DVSA, self.cnn_DVSA, self.dense_DVSA = self.make_layers(vocab_lens['DVSA'], self.kernel_size)
         if NN_params['DVEX']:
-            self.embed_DVEX, self.cnn_DVEX, self.dense_DVEX = self.make_layers(vocab_lens['DVEX'], self.kernel_sizes)
+            self.embed_DVEX, self.cnn_DVEX, self.dense_DVEX = self.make_layers(vocab_lens['DVEX'], self.kernel_size)
         if NN_params['DVL2']:
-            self.embed_DVL2, self.cnn_DVL2, self.dense_DVL2 = self.make_layers(vocab_lens['DVL2'], self.kernel_sizes)
+            self.embed_DVL2, self.cnn_DVL2, self.dense_DVL2 = self.make_layers(vocab_lens['DVL2'], self.kernel_size)
         self.flat = nn.Flatten()
         self.drop = nn.Dropout(0.5)
         self.maxpool = nn.MaxPool1d(3)
@@ -66,13 +66,14 @@ class Penta_ShallowEnsemble(nn.Module):
         x = x.squeeze(2)  # (N, Cout)
         return x  # output (N, Cout)
 
-    def make_layers(self, vocab_len, kernel_sizes):
+    def make_layers(self, vocab_len, kernel_size):
         embed = nn.Embedding(vocab_len, self.emb_len)
-        if len(kernel_sizes) > 1:
-            cnn = nn.ModuleList([nn.Conv1d(self.emb_len, self.cnn_out_size, kernel_size) for kernel_size in kernel_sizes])
+        if isinstance(kernel_size, list):
+            cnn = nn.ModuleList(
+                [nn.Conv1d(self.emb_len, self.cnn_out_size, kernel) for kernel in kernel_size])
         else:
-            cnn = nn.Conv1d(self.emb_len, self.cnn_out_size, kernel_sizes[0])
-        dense = nn.Linear(self.cnn_out_size*len(self.kernel_sizes), self.n_labels)
+            cnn = nn.Conv1d(self.emb_len, self.cnn_out_size, kernel_size)
+        dense = nn.Linear(self.cnn_out_size * len(self.kernel_size), self.n_labels)
         return embed, cnn, dense
 
     def sub_forward(self, encoding, embed_layer, cnn_layer, dense_layer):

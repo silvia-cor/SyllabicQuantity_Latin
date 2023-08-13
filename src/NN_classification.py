@@ -15,17 +15,21 @@ from NN_models.NN_cnn_cat import Penta_Cat
 from NN_models.NN_cnn_shallow_ensemble import Penta_ShallowEnsemble
 from NN_models.NN_cnn_deep_ensemble import Penta_DeepEnsemble
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-torch.multiprocessing.set_sharing_strategy('file_system')
-# for reproducibility
-torch.backends.cudnn.deterministic = True
-random.seed(42)
-torch.manual_seed(42)
-torch.cuda.manual_seed(42)
-np.random.seed(42)
 
+# ------------------------------------------------------------------------
+# class to do NN classification
+# ------------------------------------------------------------------------
 
-def NN_classification(dataset, NN_params, learner, dataset_name, n_sent, pickle_path, batch_size=64):
+def NN_classification(dataset, NN_params, learner, dataset_name, n_sent, pickle_path, batch_size=64, random_state=42):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    torch.multiprocessing.set_sharing_strategy('file_system')
+    # for reproducibility
+    torch.backends.cudnn.deterministic = True
+    random.seed(random_state)
+    torch.manual_seed(random_state)
+    torch.cuda.manual_seed(random_state)
+    np.random.seed(random_state)
+
     available_models = ['cnn_cat', 'cnn_deep_ensemble', 'cnn_shallow_ensemble']
     assert not (NN_params['FAKE'] and NN_params['SQ']), 'Can have FAKE or SQ channel, but not both'
     assert learner in available_models, f'Model not implemented, available models: {available_models}'
@@ -43,9 +47,9 @@ def NN_classification(dataset, NN_params, learner, dataset_name, n_sent, pickle_
         print(f'----- NN EXPERIMENT {method_name} for model {learner} -----')
         authors, titles, data, data_cltk, data_pos, authors_labels, titles_labels = data_for_kfold(dataset)
         dataset = NN_DataLoader(data, data_cltk, data_pos, authors_labels, NN_params, batch_size=batch_size)
-        # model = Penta_NN(NN_params, dataset.vocab_lens, len(authors), 205).to(device)
         if learner == 'cnn_cat':
-            model = Penta_Cat(NN_params, dataset.vocab_lens, len(authors), feat_dim=dataset.bf_length, device=device).to(device)
+            model = Penta_Cat(NN_params, dataset.vocab_lens, len(authors), feat_dim=dataset.bf_length,
+                              device=device).to(device)
         elif learner == 'cnn_deep_ensemble':
             model = Penta_DeepEnsemble(NN_params, dataset.vocab_lens, len(authors), feat_dim=dataset.bf_length,
                                        device=device).to(device)
@@ -54,8 +58,9 @@ def NN_classification(dataset, NN_params, learner, dataset_name, n_sent, pickle_
                                           device=device).to(device)
         print('Total paramaters:', sum(p.numel() for p in model.parameters() if p.requires_grad))
         print('Device:', device)
-        val_f1s = _train(model, NN_params, dataset.train_generator, dataset.val_generator, model_path, n_epochs=5000, patience=100)
-        y_preds, y_te = _test(model, NN_params, dataset.test_generator, model_path)
+        val_f1s = _train(model, NN_params, dataset.train_generator, dataset.val_generator, model_path, n_epochs=5000,
+                         patience=100, device=device)
+        y_preds, y_te = _test(model, NN_params, dataset.test_generator, model_path, device=device)
         if 'True' not in df:
             df['True'] = {}
             df['True']['labels'] = y_te
@@ -124,7 +129,7 @@ def xavier_uniform(model: nn.Module):
             nn.init.xavier_uniform_(p)
 
 
-def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs, patience):
+def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs, patience, device):
     os.makedirs(Path(save_path).parent, exist_ok=True)
     optimizer = optim.Adam(params=model.parameters())
     xavier_uniform(model)
@@ -144,7 +149,6 @@ def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs
                 targets = targets.to(device)
                 feats = feats.to(device)
                 preds = model(NN_params, encodings, feats)
-                # preds = model(NN_params, encodings)
                 loss = criterion(preds, targets)
                 loss.backward()
                 optimizer.step()
@@ -153,8 +157,7 @@ def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs
                 all_preds.extend(preds.detach().clone().cpu().numpy())
                 all_labels.extend(targets.detach().clone().cpu().numpy())
                 tr_f1score = f1_score(all_labels, all_preds, average='macro')
-                train.set_description(f'Epoch {epoch+1} loss={np.mean(epoch_loss):.5f} tr-macro-F1={tr_f1score:.3f}')
-
+                train.set_description(f'Epoch {epoch + 1} loss={np.mean(epoch_loss):.5f} tr-macro-F1={tr_f1score:.3f}')
         # evaluation
         model.eval()
         with torch.no_grad():
@@ -163,7 +166,6 @@ def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs
             for encodings, targets, feats in val_generator:
                 feats = feats.to(device)
                 preds = model(NN_params, encodings, feats)
-                # preds = model(NN_params, encodings)
                 preds = torch.argmax(preds, dim=1)
                 all_preds.extend(preds.detach().clone().cpu().numpy())
                 all_labels.extend(targets.numpy())
@@ -193,7 +195,6 @@ def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs
                 targets = targets.to(device)
                 feats = feats.to(device)
                 preds = model(NN_params, encodings, feats)
-                # preds = model(NN_params, encodings)
                 loss = criterion(preds, targets)
                 loss.backward()
                 optimizer.step()
@@ -201,7 +202,7 @@ def _train(model, NN_params, train_generator, val_generator, save_path, n_epochs
     return val_f1scores
 
 
-def _test(model, NN_params, test_generator, load_path):
+def _test(model, NN_params, test_generator, load_path, device):
     model.load_state_dict(torch.load(load_path))
     model.eval()
     with torch.no_grad():
@@ -210,9 +211,7 @@ def _test(model, NN_params, test_generator, load_path):
         for encodings, targets, feats in test_generator:
             feats = feats.to(device)
             preds = model(NN_params, encodings, feats)
-            # preds = model(NN_params, encodings)
             preds = torch.argmax(preds, dim=1)
             all_preds.extend(preds.detach().clone().cpu().numpy())
             all_labels.extend(targets.numpy())
     return all_preds, all_labels
-

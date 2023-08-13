@@ -8,7 +8,7 @@ class Penta_DeepEnsemble(nn.Module):
         super().__init__()
         self.emb_len = 32
         self.cnn_out_size = 128
-        self.kernel_sizes = [3, 5]
+        self.kernel_size = [3, 5]
         self.dense_size = 256
         self.n_labels = n_labels
         self.device = device
@@ -17,22 +17,22 @@ class Penta_DeepEnsemble(nn.Module):
         self.dense_feat2 = nn.Linear(self.dense_size, self.n_labels)
         if NN_params['FAKE']:
             self.embed_FAKE, self.cnn_FAKE1, self.cnn_FAKE2, self.dense_FAKE = self.make_layers(vocab_lens['FAKE'],
-                                                                                                self.kernel_sizes)
+                                                                                                self.kernel_size)
         if NN_params['SQ']:
             self.embed_SQ, self.cnn_SQ1, self.cnn_SQ2, self.dense_SQ = self.make_layers(vocab_lens['SQ'],
-                                                                                        self.kernel_sizes)
+                                                                                        self.kernel_size)
         if NN_params['DVMA']:
             self.embed_DVMA, self.cnn_DVMA1, self.cnn_DVMA2, self.dense_DVMA = self.make_layers(vocab_lens['DVMA'],
-                                                                                                self.kernel_sizes)
+                                                                                                self.kernel_size)
         if NN_params['DVSA']:
             self.embed_DVSA, self.cnn_DVSA1, self.cnn_DVSA2, self.dense_DVSA = self.make_layers(vocab_lens['DVSA'],
-                                                                                                self.kernel_sizes)
+                                                                                                self.kernel_size)
         if NN_params['DVEX']:
             self.embed_DVEX, self.cnn_DVEX1, self.cnn_DVEX2, self.dense_DVEX = self.make_layers(vocab_lens['DVEX'],
-                                                                                                self.kernel_sizes)
+                                                                                                self.kernel_size)
         if NN_params['DVL2']:
             self.embed_DVL2, self.cnn_DVL21, self.cnn_DVL22, self.dense_DVL2 = self.make_layers(vocab_lens['DVL2'],
-                                                                                                self.kernel_sizes)
+                                                                                                self.kernel_size)
         self.flat = nn.Flatten()
         self.drop = nn.Dropout(0.5)
         self.maxpool = nn.MaxPool1d(3)
@@ -99,17 +99,17 @@ class Penta_DeepEnsemble(nn.Module):
         x = x.squeeze(2)  # (N, Cout)
         return x  # output (N, Cout)
 
-    def make_layers(self, vocab_len, kernel_sizes):
+    def make_layers(self, vocab_len, kernel_size):
         embed = nn.Embedding(vocab_len, self.emb_len)
-        if isinstance(kernel_sizes, list):
+        if isinstance(kernel_size, list):
             cnn1 = nn.ModuleList(
-                [nn.Conv1d(self.emb_len, self.cnn_out_size, kernel_size) for kernel_size in kernel_sizes])
+                [nn.Conv1d(self.emb_len, self.cnn_out_size, kernel) for kernel in kernel_size])
             cnn2 = nn.ModuleList(
-                [nn.Conv1d(self.cnn_out_size, self.cnn_out_size, kernel_size) for kernel_size in kernel_sizes])
+                [nn.Conv1d(self.cnn_out_size, self.cnn_out_size, kernel) for kernel in kernel_size])
         else:
-            cnn1 = nn.Conv1d(self.emb_len, self.cnn_out_size, kernel_sizes)
-            cnn2 = nn.Conv1d(self.cnn_out_size, self.cnn_out_size, kernel_sizes)
-        dense = nn.Linear(self.cnn_out_size, self.dense_size)
+            cnn1 = nn.Conv1d(self.emb_len, self.cnn_out_size, kernel_size)
+            cnn2 = nn.Conv1d(self.cnn_out_size, self.cnn_out_size, kernel_size)
+        dense = nn.Linear(self.cnn_out_size * len(self.kernel_size), self.n_labels)
         return embed, cnn1, cnn2, dense
 
     def sub_forward(self, encoding, embed_layer, conv_stack, dense_layer):

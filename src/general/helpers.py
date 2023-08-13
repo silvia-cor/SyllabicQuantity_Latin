@@ -1,7 +1,4 @@
-import multiprocessing
-
 import nltk
-from joblib import Parallel, delayed
 from nltk.corpus import stopwords
 from cltk.prosody.lat.macronizer import Macronizer
 from cltk.prosody.lat.scanner import Scansion

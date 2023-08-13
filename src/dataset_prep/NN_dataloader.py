@@ -33,9 +33,13 @@ class NN_DataLoader:
         self.vocab_lens = {}
         self.NN_params = NN_params
         # devide the dataset into train+val and test
-        x_trval, x_te, x_trval_cltk, x_te_cltk, x_trval_pos, x_te_pos, y_trval, y_te = train_test_split(data, data_cltk, data_pos, authors_labels, test_size=0.1, random_state=42, stratify=authors_labels)
+        x_trval, x_te, x_trval_cltk, x_te_cltk, x_trval_pos, x_te_pos, y_trval, y_te = \
+            train_test_split(data, data_cltk, data_pos, authors_labels,
+                             test_size=0.1, random_state=42, stratify=authors_labels)
         # divide the train+val so that the dataset is train/val/test
-        x_tr, x_val, x_tr_cltk, x_val_cltk, x_tr_pos, x_val_pos, y_tr, y_val = train_test_split(x_trval, x_trval_cltk, x_trval_pos, y_trval, test_size=0.1, random_state=42, stratify=y_trval)
+        x_tr, x_val, x_tr_cltk, x_val_cltk, x_tr_pos, x_val_pos, y_tr, y_val = \
+            train_test_split(x_trval, x_trval_cltk, x_trval_pos, y_trval,
+                             test_size=0.1, random_state=42, stratify=y_trval)
 
         print(f'#training samples = {len(y_tr)}')
         print(f'#validation samples = {len(y_val)}')
@@ -93,11 +97,14 @@ class NN_DataLoader:
 
         # create the train/val/test generator (for batches)
         train_dataset = NN_BaseDataset(x_tr, x_tr_cltk, x_tr_pos, y_tr)
-        self.train_generator = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
+        self.train_generator = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=5,
+                                          collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
         val_dataset = NN_BaseDataset(x_val, x_val_cltk, x_val_pos, y_val)
-        self.val_generator = DataLoader(val_dataset, batch_size, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
+        self.val_generator = DataLoader(val_dataset, batch_size, num_workers=5, collate_fn=self._collate_padding,
+                                        worker_init_fn=self._seed_worker)
         test_dataset = NN_BaseDataset(x_te, x_te_cltk, x_te_pos, y_te)
-        self.test_generator = DataLoader(test_dataset, batch_size, num_workers=5, collate_fn=self._collate_padding, worker_init_fn=self._seed_worker)
+        self.test_generator = DataLoader(test_dataset, batch_size, num_workers=5, collate_fn=self._collate_padding,
+                                         worker_init_fn=self._seed_worker)
 
     def _collate_padding(self, batch):
         data = [item[0] for item in batch]
@@ -107,22 +114,28 @@ class NN_DataLoader:
         encodings = {}
         if self.NN_params['FAKE']:
             dis_data = self._encode(fake_metric_scansion(data, self.fake_vocab), self.anal_FAKE)
-            encodings['FAKE'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True, padding_value=self.anal_FAKE.vocabulary_['<pad>']).long()
+            encodings['FAKE'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True,
+                                             padding_value=self.anal_FAKE.vocabulary_['<pad>']).long()
         if self.NN_params['SQ']:
             dis_data = self._encode(data_cltk, self.anal_SQ)
-            encodings['SQ'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True, padding_value=self.anal_SQ.vocabulary_['<pad>']).long()
+            encodings['SQ'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True,
+                                           padding_value=self.anal_SQ.vocabulary_['<pad>']).long()
         if self.NN_params['DVMA']:
             dis_data = self._encode(dis_DVMA(data, self.function_words), self.anal_DVMA)
-            encodings['DVMA'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True, padding_value=self.anal_DVMA.vocabulary_['<pad>']).long()
+            encodings['DVMA'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True,
+                                             padding_value=self.anal_DVMA.vocabulary_['<pad>']).long()
         if self.NN_params['DVSA']:
             dis_data = self._encode(dis_DVSA(data, self.function_words), self.anal_DVSA)
-            encodings['DVSA'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True, padding_value=self.anal_DVSA.vocabulary_['<pad>']).long()
+            encodings['DVSA'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True,
+                                             padding_value=self.anal_DVSA.vocabulary_['<pad>']).long()
         if self.NN_params['DVEX']:
             dis_data = self._encode(dis_DVEX(data, self.function_words), self.anal_DVEX)
-            encodings['DVEX'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True, padding_value=self.anal_DVEX.vocabulary_['<pad>']).long()
+            encodings['DVEX'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True,
+                                             padding_value=self.anal_DVEX.vocabulary_['<pad>']).long()
         if self.NN_params['DVL2']:
             dis_data = self._encode(dis_DVL2(data, self.function_words), self.anal_DVL2)
-            encodings['DVL2'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True, padding_value=self.anal_DVL2.vocabulary_['<pad>']).long()
+            encodings['DVL2'] = pad_sequence([torch.Tensor(doc) for doc in dis_data], batch_first=True,
+                                             padding_value=self.anal_DVL2.vocabulary_['<pad>']).long()
         targets = torch.Tensor(labels).long()
         feats = _features(data, data_pos, self.function_words, self.pos_vectorizer)
         return encodings, targets, feats

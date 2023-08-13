@@ -2,6 +2,7 @@ from dataset_prep.KabalaCorpusA_prep import dataset_KabalaCorpusA
 from dataset_prep.LatinitasAntiqua_prep import dataset_LatinitasAntiqua
 from dataset_prep.MedLatin_prep import dataset_MedLatin
 
+
 class dataset_all:
     def __init__(self, n_sent=10):
         corpus_KabalaCorpusA = dataset_KabalaCorpusA(n_sent=n_sent)
@@ -33,4 +34,3 @@ class dataset_all:
             title_original = dataset.titles[sub_list[0]]
             new_label = self.titles.index(title_original)
             self.titles_labels.append([new_label] * len(sub_list))
-
